@@ -1,0 +1,335 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/store/app-store";
+import { DataLoader } from "@/components/DataLoader";
+import { BottomNav } from "@/components/BottomNav";
+import { Card } from "@/components/ui/Card";
+import { NumberPad } from "@/components/ui/NumberPad";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { createClient } from "@/lib/supabase/client";
+import { formatKRW, today } from "@/lib/utils";
+import { Gender, MissingDayPolicy } from "@/lib/types";
+import { getPreviousCycleSavings } from "@/lib/budget";
+
+function SettingsContent() {
+  const { profile, cycle, setProfile, setCycle, setExpenses, setWishlistItems, getDailySummaries, isLoading } = useAppStore();
+  const router = useRouter();
+
+  const [editNickname, setEditNickname] = useState(false);
+  const [nickname, setNickname] = useState(profile?.nickname ?? "");
+  const [editBalance, setEditBalance] = useState(false);
+  const [balance, setBalance] = useState("");
+  const [editPayday, setEditPayday] = useState(false);
+  const [payday, setPayday] = useState(cycle?.next_payday ?? "");
+  const [editFixed, setEditFixed] = useState(false);
+  const [fixedExp, setFixedExp] = useState("");
+  const [showReset, setShowReset] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="text-sm" style={{ color: "#BBBBBB" }}>불러오는 중...</div></div>;
+  }
+
+  async function saveNickname() {
+    if (!profile || !nickname.trim()) return;
+    setSaving(true);
+    const supabase = createClient();
+    const { data } = await supabase.from("profiles").update({ nickname }).eq("id", profile.id).select().single();
+    if (data) setProfile(data);
+    setSaving(false);
+    setEditNickname(false);
+  }
+
+  async function saveGender(gender: Gender) {
+    if (!profile) return;
+    const supabase = createClient();
+    const { data } = await supabase.from("profiles").update({ gender }).eq("id", profile.id).select().single();
+    if (data) setProfile(data);
+  }
+
+  async function savePolicy(policy: MissingDayPolicy) {
+    if (!profile) return;
+    const supabase = createClient();
+    const { data } = await supabase.from("profiles").update({ missing_day_policy: policy }).eq("id", profile.id).select().single();
+    if (data) setProfile(data);
+  }
+
+  async function saveBalance() {
+    if (!cycle || !balance) return;
+    setSaving(true);
+    const supabase = createClient();
+    const { data } = await supabase.from("cycles").update({ total_balance: parseInt(balance, 10) }).eq("id", cycle.id).select().single();
+    if (data) setCycle(data);
+    setSaving(false);
+    setEditBalance(false);
+    setBalance("");
+  }
+
+  async function savePayday() {
+    if (!cycle || !payday) return;
+    setSaving(true);
+    const supabase = createClient();
+    const { data } = await supabase.from("cycles").update({ next_payday: payday }).eq("id", cycle.id).select().single();
+    if (data) setCycle(data);
+    setSaving(false);
+    setEditPayday(false);
+  }
+
+  async function saveFixed() {
+    if (!cycle || !fixedExp) return;
+    setSaving(true);
+    const supabase = createClient();
+    const { data } = await supabase.from("cycles").update({ fixed_expenses: parseInt(fixedExp, 10) }).eq("id", cycle.id).select().single();
+    if (data) setCycle(data);
+    setSaving(false);
+    setEditFixed(false);
+    setFixedExp("");
+  }
+
+  async function handleNewCycle() {
+    if (!cycle) return;
+    const supabase = createClient();
+    const summaries = getDailySummaries();
+    const saved = getPreviousCycleSavings(summaries);
+    await supabase.from("cycles").update({ ended_at: today() }).eq("id", cycle.id);
+    router.push(`/setup?carryover=${saved}`);
+  }
+
+  async function handleResetAll() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("expenses").delete().eq("user_id", user.id);
+    await supabase.from("cycles").delete().eq("user_id", user.id);
+    await supabase.from("wishlist_items").delete().eq("user_id", user.id);
+    await supabase.from("profiles").delete().eq("id", user.id);
+    setProfile(null); setCycle(null); setExpenses([]); setWishlistItems([]);
+    router.push("/setup");
+  }
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  return (
+    <div className="page-fade pb-[80px]">
+      <div className="px-5 pt-12 pb-4">
+        <h1 className="text-xl font-bold" style={{ color: "#191919" }}>설정</h1>
+      </div>
+
+      <div className="px-5 space-y-3">
+        {/* 내 정보 */}
+        <SectionTitle>내 정보</SectionTitle>
+        <Card>
+          <SettingRow
+            label="닉네임"
+            value={profile?.nickname}
+            onEdit={() => setEditNickname(true)}
+          />
+          <Divider />
+          <div>
+            <p className="text-sm mb-2" style={{ color: "#888888" }}>성별</p>
+            <div className="flex gap-2">
+              {(["male", "female"] as Gender[]).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => saveGender(g)}
+                  className="flex-1 h-9 rounded-lg text-sm font-semibold"
+                  style={{
+                    background: profile?.gender === g ? "#191919" : "#F7F7F8",
+                    color: profile?.gender === g ? "#FFFFFF" : "#888888",
+                  }}
+                >
+                  {g === "male" ? "남성" : "여성"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* 미입력 날 처리 */}
+        <SectionTitle>기록 설정</SectionTitle>
+        <Card>
+          <p className="text-sm mb-1" style={{ color: "#191919" }}>며칠 만에 켰을 때 처리 방식</p>
+          <p className="text-xs mb-3" style={{ color: "#888888" }}>미입력 날짜를 어떻게 처리할지 정해요</p>
+          <div className="flex gap-2">
+            {([["full", "예산 소진"] , ["zero", "지출 없음"]] as [MissingDayPolicy, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => savePolicy(v)}
+                className="flex-1 h-9 rounded-lg text-sm font-semibold"
+                style={{
+                  background: profile?.missing_day_policy === v ? "#191919" : "#F7F7F8",
+                  color: profile?.missing_day_policy === v ? "#FFFFFF" : "#888888",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        {/* 예산 설정 */}
+        <SectionTitle>예산 설정</SectionTitle>
+        <Card>
+          <SettingRow
+            label="현재 잔액"
+            value={cycle ? `₩${formatKRW(cycle.total_balance)}` : "-"}
+            onEdit={() => setEditBalance(true)}
+          />
+          <Divider />
+          <SettingRow
+            label="다음 월급일"
+            value={cycle?.next_payday ?? "-"}
+            onEdit={() => setEditPayday(true)}
+          />
+          <Divider />
+          <SettingRow
+            label="고정 지출"
+            value={cycle ? `₩${formatKRW(cycle.fixed_expenses)}` : "-"}
+            onEdit={() => setEditFixed(true)}
+          />
+        </Card>
+
+        {/* 사이클 */}
+        <SectionTitle>사이클 관리</SectionTitle>
+        <Card>
+          <button
+            onClick={handleNewCycle}
+            className="w-full text-left text-sm font-semibold py-1"
+            style={{ color: "#FF6B35" }}
+          >
+            새 사이클 시작
+          </button>
+        </Card>
+
+        {/* 앱 정보 */}
+        <SectionTitle>앱 정보</SectionTitle>
+        <Card>
+          <SettingRow label="버전" value="1.0.0" />
+          <Divider />
+          <button
+            onClick={handleLogout}
+            className="w-full text-left text-sm font-semibold py-1 mt-1"
+            style={{ color: "#888888" }}
+          >
+            로그아웃
+          </button>
+          <Divider />
+          <button
+            onClick={() => setShowReset(true)}
+            className="w-full text-left text-sm font-semibold py-1 mt-1"
+            style={{ color: "#FF3B30" }}
+          >
+            데이터 전체 초기화
+          </button>
+        </Card>
+      </div>
+
+      {/* 닉네임 편집 */}
+      <BottomSheet open={editNickname} onClose={() => setEditNickname(false)} title="닉네임 변경">
+        <div className="px-4 py-4 space-y-4">
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={10}
+            className="w-full h-11 px-4 rounded-xl text-sm outline-none"
+            style={{ background: "#F7F7F8" }}
+          />
+          <button
+            onClick={saveNickname}
+            disabled={saving}
+            className="w-full h-[54px] rounded-xl text-base font-bold text-white"
+            style={{ background: "#FF6B35" }}
+          >
+            저장
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* 잔액 편집 */}
+      <BottomSheet open={editBalance} onClose={() => { setEditBalance(false); setBalance(""); }} title="잔액 수정">
+        <div className="px-4 pt-4">
+          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: balance ? "#191919" : "#BBBBBB" }}>
+            ₩ {balance ? formatKRW(parseInt(balance, 10)) : "0"}
+          </div>
+        </div>
+        <NumberPad value={balance} onChange={setBalance} />
+        <div className="px-4 pb-6">
+          <button onClick={saveBalance} disabled={!balance || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: balance ? "#FF6B35" : "#BBBBBB" }}>저장</button>
+        </div>
+      </BottomSheet>
+
+      {/* 월급일 편집 */}
+      <BottomSheet open={editPayday} onClose={() => setEditPayday(false)} title="월급일 변경">
+        <div className="px-4 py-4 space-y-4">
+          <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm outline-none" style={{ background: "#F7F7F8", color: "#191919" }} />
+          <button onClick={savePayday} disabled={saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#FF6B35" }}>저장</button>
+        </div>
+      </BottomSheet>
+
+      {/* 고정지출 편집 */}
+      <BottomSheet open={editFixed} onClose={() => { setEditFixed(false); setFixedExp(""); }} title="고정 지출 변경">
+        <div className="px-4 pt-4">
+          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: fixedExp ? "#191919" : "#BBBBBB" }}>
+            ₩ {fixedExp ? formatKRW(parseInt(fixedExp, 10)) : "0"}
+          </div>
+        </div>
+        <NumberPad value={fixedExp} onChange={setFixedExp} />
+        <div className="px-4 pb-6">
+          <button onClick={saveFixed} disabled={!fixedExp || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: fixedExp ? "#FF6B35" : "#BBBBBB" }}>저장</button>
+        </div>
+      </BottomSheet>
+
+      {/* 초기화 확인 */}
+      <BottomSheet open={showReset} onClose={() => setShowReset(false)} title="데이터 초기화">
+        <div className="px-4 py-6 space-y-4">
+          <p className="text-sm" style={{ color: "#888888" }}>모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없어요.</p>
+          <button onClick={handleResetAll} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#FF3B30" }}>
+            전체 삭제
+          </button>
+          <button onClick={() => setShowReset(false)} className="w-full h-[54px] rounded-xl text-base font-bold" style={{ background: "#F7F7F8", color: "#191919" }}>
+            취소
+          </button>
+        </div>
+      </BottomSheet>
+
+      <BottomNav />
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs font-semibold px-1 pt-2" style={{ color: "#888888" }}>{children}</p>;
+}
+
+function Divider() {
+  return <div className="my-3" style={{ borderTop: "1px solid #F0F0F0" }} />;
+}
+
+function SettingRow({ label, value, onEdit }: { label: string; value?: string; onEdit?: () => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm" style={{ color: "#888888" }}>{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold" style={{ color: "#191919" }}>{value}</span>
+        {onEdit && (
+          <button onClick={onEdit} className="text-xs font-semibold" style={{ color: "#FF6B35" }}>수정</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <DataLoader>
+      <SettingsContent />
+    </DataLoader>
+  );
+}
