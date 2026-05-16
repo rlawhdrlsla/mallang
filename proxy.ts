@@ -23,18 +23,26 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Supabase unreachable — let the request through; pages handle auth themselves
+  }
   const { pathname } = request.nextUrl;
 
   const publicPaths = ["/login", "/api/health", "/api/auth"];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? `https://${request.headers.get("host")}`;
+
   if (!user && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(`${siteUrl}/login`);
   }
 
   if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(`${siteUrl}/`);
   }
 
   return supabaseResponse;
