@@ -4,6 +4,9 @@ builder = "nixpacks"
 [build.nixpacksPlan.phases.setup]
 nixPkgs = ["nodejs_20"]
 
+[build.nixpacksPlan.phases.install]
+cmds = ["npm ci --include=dev"]
+
 [deploy]
 startCommand = "npm run start"
 healthcheckPath = "/api/health"
