@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
     const { data } = await supabase.auth.getUser();
     user = data.user;
   } catch {
-    // Supabase unreachable — let the request through; pages handle auth themselves
+    return supabaseResponse; // Supabase unreachable — let request through
   }
   const { pathname } = request.nextUrl;
 
