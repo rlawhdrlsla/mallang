@@ -26,7 +26,7 @@ export function DataLoader({ children }: { children: React.ReactNode }) {
           .eq("id", user.id)
           .single();
 
-        if (!profile) { setLoading(false); router.push("/setup"); return; }
+        if (!profile) { router.push("/setup"); return; }
         setProfile(profile);
 
         // 현재 사이클 (ended_at 없는 가장 최근)
@@ -39,7 +39,7 @@ export function DataLoader({ children }: { children: React.ReactNode }) {
           .limit(1)
           .single();
 
-        if (!cycle) { setLoading(false); router.push("/setup"); return; }
+        if (!cycle) { router.push("/setup"); return; }
 
         // last_active_date 업데이트
         const todayStr = today();
