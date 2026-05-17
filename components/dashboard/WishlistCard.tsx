@@ -20,7 +20,25 @@ export function WishlistCard() {
   const [showAdd, setShowAdd] = useState(false);
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
+  const [itemImageUrl, setItemImageUrl] = useState("");
+  const [urlInput, setUrlInput] = useState("");
+  const [fetching, setFetching] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  async function handleFetchUrl() {
+    if (!urlInput) return;
+    setFetching(true);
+    try {
+      const res = await fetch(`/api/og?url=${encodeURIComponent(urlInput)}`);
+      const data = await res.json();
+      if (data.title && !itemName) setItemName(data.title.slice(0, 30));
+      if (data.price && !itemPrice) setItemPrice(String(data.price));
+      if (data.image) setItemImageUrl(data.image);
+    } catch {
+      // 실패 시 무시
+    }
+    setFetching(false);
+  }
 
   async function handleAddItem() {
     if (!itemName || !itemPrice) return;
@@ -31,7 +49,12 @@ export function WishlistCard() {
 
     const { data, error } = await supabase
       .from("wishlist_items")
-      .insert({ user_id: user.id, name: itemName, price: parseInt(itemPrice, 10) })
+      .insert({
+        user_id: user.id,
+        name: itemName,
+        price: parseInt(itemPrice, 10),
+        image_url: itemImageUrl || null,
+      })
       .select()
       .single();
 
@@ -39,6 +62,8 @@ export function WishlistCard() {
     setSaving(false);
     setItemName("");
     setItemPrice("");
+    setItemImageUrl("");
+    setUrlInput("");
     setShowAdd(false);
   }
 
@@ -75,7 +100,8 @@ export function WishlistCard() {
                 key={item.id}
                 name={item.name}
                 price={item.price}
-                label="오늘부터 시작해보세요"
+                imageUrl={item.image_url}
+                label="오늘부터 절약을 시작해보세요"
                 labelColor="#888888"
                 onRemove={() => handleRemove(item.id)}
               />
@@ -88,7 +114,12 @@ export function WishlistCard() {
                 key={item.id}
                 name={item.name}
                 price={item.price}
-                label={alreadyAchievable ? "이미 달성 가능!" : `${daysNeeded}일 후 달성`}
+                imageUrl={item.image_url}
+                label={
+                  alreadyAchievable
+                    ? "이미 달성 가능!"
+                    : `${daysNeeded}일 더 아끼면 구매 가능`
+                }
                 labelColor={alreadyAchievable ? "#00B493" : "#888888"}
                 highlight={alreadyAchievable}
                 onRemove={() => handleRemove(item.id)}
@@ -99,7 +130,47 @@ export function WishlistCard() {
       </Card>
 
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="위시리스트 추가">
-        <div className="px-4 py-4 space-y-3">
+        {/* 상품 링크로 자동 입력 */}
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-xs font-semibold mb-2" style={{ color: "#888888" }}>
+            상품 링크로 자동 입력 (선택사항)
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="상품 페이지 URL 붙여넣기"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              className="flex-1 h-11 px-4 rounded-xl text-sm outline-none"
+              style={{ background: "#F7F7F8", color: "#191919" }}
+            />
+            <button
+              onClick={handleFetchUrl}
+              disabled={!urlInput || fetching}
+              className="h-11 px-4 rounded-xl text-sm font-semibold whitespace-nowrap"
+              style={{
+                background: urlInput && !fetching ? "#FF6B35" : "#F7F7F8",
+                color: urlInput && !fetching ? "#FFFFFF" : "#BBBBBB",
+              }}
+            >
+              {fetching ? "..." : "가져오기"}
+            </button>
+          </div>
+          {itemImageUrl && (
+            <div className="mt-2 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={itemImageUrl}
+                alt=""
+                className="w-12 h-12 rounded-lg object-cover"
+                style={{ border: "1px solid #F0F0F0" }}
+              />
+              <span className="text-xs" style={{ color: "#00B493" }}>이미지 가져오기 완료</span>
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 py-2 space-y-3">
           <input
             type="text"
             placeholder="아이템 이름"
@@ -135,14 +206,14 @@ export function WishlistCard() {
 }
 
 function WishlistRow({
-  name, price, label, labelColor, highlight, onRemove,
+  name, price, imageUrl, label, labelColor, highlight, onRemove,
 }: {
-  name: string; price: number; label: string; labelColor: string;
+  name: string; price: number; imageUrl?: string | null; label: string; labelColor: string;
   highlight?: boolean; onRemove: () => void;
 }) {
   return (
     <div
-      className="flex items-center justify-between py-3 border-t"
+      className="flex items-center gap-3 py-3 border-t"
       style={{
         borderColor: "#F0F0F0",
         background: highlight ? "#E6F9F5" : "transparent",
@@ -151,11 +222,20 @@ function WishlistRow({
         marginTop: highlight ? 4 : 0,
       }}
     >
-      <div>
-        <p className="text-sm font-semibold" style={{ color: "#191919" }}>{name}</p>
+      {imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+          style={{ border: "1px solid #F0F0F0" }}
+        />
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate" style={{ color: "#191919" }}>{name}</p>
         <p className="text-xs mt-0.5" style={{ color: labelColor }}>{label}</p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-shrink-0">
         <p className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
           ₩{formatKRW(price)}
         </p>

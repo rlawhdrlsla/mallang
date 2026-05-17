@@ -9,6 +9,7 @@ import {
   getCycleSummary,
   computeWishlistProgress,
 } from "./budget";
+import { today } from "./utils";
 import type { DailySummary, WishlistProgress } from "./types";
 
 export function useDailySummaries(): DailySummary[] {
@@ -34,6 +35,19 @@ export function useTomorrowBudget(): number | null {
 export function useCycleSummary() {
   const summaries = useDailySummaries();
   return useMemo(() => getCycleSummary(summaries), [summaries]);
+}
+
+export function useRemainingBudget(): { remainingBalance: number; remainingDays: number } {
+  const summaries = useDailySummaries();
+  return useMemo(() => {
+    const todayStr = today();
+    const idx = summaries.findIndex((s) => s.date === todayStr);
+    if (idx === -1) return { remainingBalance: 0, remainingDays: 0 };
+    const s = summaries[idx];
+    const remainingDays = summaries.length - idx;
+    const remainingBalance = Math.max(0, s.budget * remainingDays - s.spent);
+    return { remainingBalance, remainingDays };
+  }, [summaries]);
 }
 
 export function useWishlistProgress(): WishlistProgress[] {

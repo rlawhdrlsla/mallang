@@ -1,12 +1,13 @@
 "use client";
 
-import { useTodaySummary } from "@/lib/hooks";
+import { useTodaySummary, useRemainingBudget } from "@/lib/hooks";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatKRW } from "@/lib/utils";
 
 export function TodayBudgetCard() {
   const todaySummary = useTodaySummary();
+  const { remainingBalance, remainingDays } = useRemainingBudget();
 
   if (!todaySummary) return null;
 
@@ -47,6 +48,20 @@ export function TodayBudgetCard() {
           </p>
         </div>
       </div>
+
+      {remainingDays > 1 && (
+        <div
+          className="mt-3 pt-3 flex items-center justify-between border-t"
+          style={{ borderColor: "#F0F0F0" }}
+        >
+          <span className="text-xs" style={{ color: "#888888" }}>
+            월급날까지 {remainingDays}일간 총 사용 가능
+          </span>
+          <span className="text-xs font-bold tabular-nums" style={{ color: "#191919" }}>
+            ₩{formatKRW(remainingBalance)}
+          </span>
+        </div>
+      )}
     </Card>
   );
 }

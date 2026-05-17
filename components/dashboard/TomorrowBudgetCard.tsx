@@ -15,9 +15,7 @@ export function TomorrowBudgetCard() {
   return (
     <Card>
       <p className="text-xs font-semibold" style={{ color: "#888888" }}>
-        {todaySaved > 0
-          ? `₩${formatKRW(todaySaved)} 아끼면 내일 쓸 수 있는 금액`
-          : "내일 쓸 수 있는 금액"}
+        내일 쓸 수 있는 금액
       </p>
       <div
         className="text-2xl font-bold tabular-nums mt-1 transition-all duration-200"
@@ -25,6 +23,11 @@ export function TomorrowBudgetCard() {
       >
         ₩{formatKRW(tomorrowBudget)}
       </div>
+      {todaySaved > 0 && (
+        <p className="text-xs mt-1" style={{ color: "#00B493" }}>
+          오늘 ₩{formatKRW(todaySaved)} 절약 반영
+        </p>
+      )}
     </Card>
   );
 }
