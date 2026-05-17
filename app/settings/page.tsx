@@ -182,6 +182,35 @@ function SettingsContent() {
             value={cycle ? `₩${formatKRW(cycle.fixed_expenses)}` : "-"}
             onEdit={() => setEditFixed(true)}
           />
+          {cycle && cycle.carried_over_amount > 0 && (
+            <>
+              <Divider />
+              <div className="flex items-center justify-between">
+                <span className="text-sm" style={{ color: "#6B6B6B" }}>이전 사이클 이월액</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: "#059669" }}>
+                    +₩{formatKRW(cycle.carried_over_amount)}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      const supabase = createClient();
+                      const { data } = await supabase
+                        .from("cycles")
+                        .update({ carried_over_amount: 0 })
+                        .eq("id", cycle.id)
+                        .select()
+                        .single();
+                      if (data) setCycle(data);
+                    }}
+                    className="text-xs font-semibold px-2 py-1 rounded-lg"
+                    style={{ background: "#FEF2F2", color: "#DC2626" }}
+                  >
+                    해제
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
 
         {/* 사이클 */}
