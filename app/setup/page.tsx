@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NumberPad } from "@/components/ui/NumberPad";
 import { formatKRW, today, diffDays } from "@/lib/utils";
-import { Gender, MissingDayPolicy } from "@/lib/types";
+import { MissingDayPolicy } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { Suspense } from "react";
 
@@ -18,7 +18,6 @@ function SetupForm() {
 
   const [step, setStep] = useState(isNewCycle ? 2 : 1); // 새 사이클이면 잔액부터
   const [nickname, setNickname] = useState("");
-  const [gender, setGender] = useState<Gender | null>(null);
   const [balance, setBalance] = useState("");
   const [payday, setPayday] = useState("");
   const [hasFixed, setHasFixed] = useState<boolean | null>(null);
@@ -52,7 +51,7 @@ function SetupForm() {
     // 프로필 upsert
     const { data: profile } = await supabase
       .from("profiles")
-      .upsert({ id: user.id, nickname, gender, missing_day_policy: "full" as MissingDayPolicy })
+      .upsert({ id: user.id, nickname, missing_day_policy: "full" as MissingDayPolicy })
       .select()
       .single();
 
@@ -80,7 +79,7 @@ function SetupForm() {
   function prev() { if (step > 1) setStep(step - 1); }
 
   const canNext = (
-    (step === 1 && nickname.trim() && gender) ||
+    (step === 1 && nickname.trim()) ||
     (step === 2 && balance && parseInt(balance) > 0) ||
     (step === 3 && payday && daysLeft !== null && daysLeft > 0) ||
     (step === 4 && (hasFixed === false || (hasFixed === true && fixedExp)))
@@ -101,10 +100,7 @@ function SetupForm() {
 
       <div className="flex-1">
         {step === 1 && (
-          <Step1
-            nickname={nickname} setNickname={setNickname}
-            gender={gender} setGender={setGender}
-          />
+          <Step1 nickname={nickname} setNickname={setNickname} />
         )}
         {step === 2 && (
           <Step2 balance={balance} setBalance={setBalance} />
@@ -143,15 +139,14 @@ function SetupForm() {
   );
 }
 
-function Step1({ nickname, setNickname, gender, setGender }: {
+function Step1({ nickname, setNickname }: {
   nickname: string; setNickname: (v: string) => void;
-  gender: Gender | null; setGender: (g: Gender) => void;
 }) {
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold" style={{ color: "#191919" }}>반가워요!</h2>
-        <p className="text-sm mt-1" style={{ color: "#888888" }}>이름이 뭐예요?</p>
+        <p className="text-sm mt-1" style={{ color: "#888888" }}>어떻게 불러드릴까요?</p>
       </div>
       <input
         type="text"
@@ -162,25 +157,6 @@ function Step1({ nickname, setNickname, gender, setGender }: {
         className="w-full h-14 px-4 rounded-xl text-base outline-none border"
         style={{ borderColor: "#EEEEEE", background: "#FFFFFF" }}
       />
-      <div>
-        <p className="text-sm font-semibold mb-3" style={{ color: "#191919" }}>성별</p>
-        <div className="flex gap-3">
-          {(["male", "female"] as Gender[]).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGender(g)}
-              className="flex-1 h-14 rounded-xl text-base font-bold btn-press border"
-              style={{
-                background: gender === g ? "#191919" : "#FFFFFF",
-                color: gender === g ? "#FFFFFF" : "#888888",
-                borderColor: gender === g ? "#191919" : "#EEEEEE",
-              }}
-            >
-              {g === "male" ? "남성" : "여성"}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -211,7 +187,7 @@ function Step3({ payday, setPayday, daysLeft }: {
   const minDate = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    return d.toISOString().slice(0, 10);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   })();
 
   return (

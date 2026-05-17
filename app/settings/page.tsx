@@ -10,7 +10,7 @@ import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { createClient } from "@/lib/supabase/client";
 import { formatKRW, today } from "@/lib/utils";
-import { Gender, MissingDayPolicy } from "@/lib/types";
+import { MissingDayPolicy } from "@/lib/types";
 import { getPreviousCycleSavings } from "@/lib/budget";
 
 function SettingsContent() {
@@ -40,13 +40,6 @@ function SettingsContent() {
     if (data) setProfile(data);
     setSaving(false);
     setEditNickname(false);
-  }
-
-  async function saveGender(gender: Gender) {
-    if (!profile) return;
-    const supabase = createClient();
-    const { data } = await supabase.from("profiles").update({ gender }).eq("id", profile.id).select().single();
-    if (data) setProfile(data);
   }
 
   async function savePolicy(policy: MissingDayPolicy) {
@@ -130,25 +123,6 @@ function SettingsContent() {
             value={profile?.nickname}
             onEdit={() => setEditNickname(true)}
           />
-          <Divider />
-          <div>
-            <p className="text-sm mb-2" style={{ color: "#888888" }}>성별</p>
-            <div className="flex gap-2">
-              {(["male", "female"] as Gender[]).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => saveGender(g)}
-                  className="flex-1 h-9 rounded-lg text-sm font-semibold"
-                  style={{
-                    background: profile?.gender === g ? "#191919" : "#F7F7F8",
-                    color: profile?.gender === g ? "#FFFFFF" : "#888888",
-                  }}
-                >
-                  {g === "male" ? "남성" : "여성"}
-                </button>
-              ))}
-            </div>
-          </div>
         </Card>
 
         {/* 미입력 날 처리 */}

@@ -8,6 +8,7 @@ import { formatKRW } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 
 export function WishlistCard() {
   const wishlistItems = useAppStore((s) => s.wishlistItems);
@@ -18,6 +19,7 @@ export function WishlistCard() {
   const hasNoSaving = elapsedDays === 0 || totalSaved === 0;
 
   const [showAdd, setShowAdd] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
   const [itemImageUrl, setItemImageUrl] = useState("");
@@ -67,10 +69,12 @@ export function WishlistCard() {
     setShowAdd(false);
   }
 
-  async function handleRemove(id: string) {
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
     const supabase = createClient();
-    await supabase.from("wishlist_items").delete().eq("id", id);
-    removeWishlistItem(id);
+    await supabase.from("wishlist_items").delete().eq("id", pendingDeleteId);
+    removeWishlistItem(pendingDeleteId);
+    setPendingDeleteId(null);
   }
 
   return (
@@ -103,7 +107,7 @@ export function WishlistCard() {
                 imageUrl={item.image_url}
                 label="오늘부터 절약을 시작해보세요"
                 labelColor="#888888"
-                onRemove={() => handleRemove(item.id)}
+                onRemove={() => setPendingDeleteId(item.id)}
               />
             ))}
           </>
@@ -122,12 +126,19 @@ export function WishlistCard() {
                 }
                 labelColor={alreadyAchievable ? "#00B493" : "#888888"}
                 highlight={alreadyAchievable}
-                onRemove={() => handleRemove(item.id)}
+                onRemove={() => setPendingDeleteId(item.id)}
               />
             ))}
           </>
         )}
       </Card>
+
+      <ConfirmSheet
+        open={!!pendingDeleteId}
+        message="위시리스트에서 삭제할까요?"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
 
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="위시리스트 추가">
         {/* 상품 링크로 자동 입력 */}

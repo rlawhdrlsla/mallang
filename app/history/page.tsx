@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useDailySummaries, useCycleSummary } from "@/lib/hooks";
 import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { Card } from "@/components/ui/Card";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { formatKRW, formatDateShort, getDayOfWeek, CATEGORY_LABELS, CATEGORY_COLORS, today } from "@/lib/utils";
-import { DailySummary, Expense } from "@/lib/types";
+import { DailySummary, Expense, Cycle } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 
-type Tab = "calendar" | "list";
+type Tab = "calendar" | "list" | "past";
 
 function HistoryContent() {
   const [tab, setTab] = useState<Tab>("calendar");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const expenses = useAppStore((s) => s.expenses);
   const removeExpense = useAppStore((s) => s.removeExpense);
   const isLoading = useAppStore((s) => s.isLoading);
@@ -31,10 +33,12 @@ function HistoryContent() {
   const todayStr = today();
   const pastSummaries = summaries.filter((s) => s.date <= todayStr);
 
-  async function handleDelete(id: string) {
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
     const supabase = createClient();
-    await supabase.from("expenses").delete().eq("id", id);
-    removeExpense(id);
+    await supabase.from("expenses").delete().eq("id", pendingDeleteId);
+    removeExpense(pendingDeleteId);
+    setPendingDeleteId(null);
   }
 
   return (
@@ -71,7 +75,7 @@ function HistoryContent() {
 
       {/* 탭 */}
       <div className="flex gap-2 px-5 mb-4">
-        {([["calendar", "캘린더"], ["list", "날짜별"]] as [Tab, string][]).map(([v, label]) => (
+        {([["calendar", "캘린더"], ["list", "날짜별"], ["past", "지난 사이클"]] as [Tab, string][]).map(([v, label]) => (
           <button
             key={v}
             onClick={() => setTab(v)}
@@ -86,25 +90,38 @@ function HistoryContent() {
         ))}
       </div>
 
-      {tab === "calendar" ? (
+      {tab === "calendar" && (
         <div className="px-5">
           <CalendarView
             summaries={pastSummaries}
             expenses={expenses.filter((e) => e.date <= todayStr)}
           />
         </div>
-      ) : (
+      )}
+      {tab === "list" && (
         <div className="px-5 space-y-3">
           {[...pastSummaries].reverse().map((s) => (
             <DayCard
               key={s.date}
               summary={s}
               expenses={expenses.filter((e) => e.date === s.date)}
-              onDelete={handleDelete}
+              onDeleteRequest={setPendingDeleteId}
             />
           ))}
         </div>
       )}
+      {tab === "past" && (
+        <div className="px-5">
+          <PastCycles />
+        </div>
+      )}
+
+      <ConfirmSheet
+        open={!!pendingDeleteId}
+        message="이 지출을 삭제할까요?"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
 
       <BottomNav />
     </div>
@@ -283,9 +300,9 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
 }
 
 function DayCard({
-  summary, expenses, onDelete,
+  summary, expenses, onDeleteRequest,
 }: {
-  summary: DailySummary; expenses: Expense[]; onDelete: (id: string) => void;
+  summary: DailySummary; expenses: Expense[]; onDeleteRequest: (id: string) => void;
 }) {
   const { date, budget, spent, saved } = summary;
   const isOver = saved < 0;
@@ -337,11 +354,101 @@ function DayCard({
             <span className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
               ₩{formatKRW(e.amount)}
             </span>
-            <button onClick={() => onDelete(e.id)} style={{ color: "#BBBBBB" }}>×</button>
+            <button onClick={() => onDeleteRequest(e.id)} style={{ color: "#BBBBBB" }}>×</button>
           </div>
         </div>
       ))}
     </Card>
+  );
+}
+
+interface PastCycleData extends Cycle {
+  totalSpent: number;
+}
+
+function PastCycles() {
+  const [cycles, setCycles] = useState<PastCycleData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      const { data: pastCycles } = await supabase
+        .from("cycles")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("ended_at", "is", null)
+        .order("ended_at", { ascending: false });
+
+      if (!pastCycles?.length) { setLoading(false); return; }
+
+      const { data: expenses } = await supabase
+        .from("expenses")
+        .select("cycle_id, amount")
+        .in("cycle_id", pastCycles.map((c) => c.id));
+
+      const spentMap: Record<string, number> = {};
+      for (const e of expenses ?? []) {
+        spentMap[e.cycle_id] = (spentMap[e.cycle_id] ?? 0) + e.amount;
+      }
+
+      setCycles(pastCycles.map((c) => ({ ...c, totalSpent: spentMap[c.id] ?? 0 })));
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>불러오는 중...</p>;
+  }
+  if (!cycles.length) {
+    return <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>아직 종료된 사이클이 없어요</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {cycles.map((c) => {
+        const effective = c.total_balance - c.fixed_expenses + c.carried_over_amount;
+        const saved = Math.max(0, effective - c.totalSpent);
+        const isProfit = saved > 0;
+        return (
+          <Card key={c.id}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+                {c.start_date} ~ {c.ended_at?.slice(0, 10)}
+              </span>
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: isProfit ? "#E6F9F5" : "#FFF0EF",
+                  color: isProfit ? "#00B493" : "#FF3B30",
+                }}
+              >
+                {isProfit ? `절약 ₩${formatKRW(saved)}` : `초과 ₩${formatKRW(Math.abs(effective - c.totalSpent))}`}
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              <Row label="예산" value={`₩${formatKRW(c.total_balance)}`} />
+              {c.fixed_expenses > 0 && <Row label="고정 지출" value={`₩${formatKRW(c.fixed_expenses)}`} />}
+              {c.carried_over_amount > 0 && <Row label="이월 절약" value={`+₩${formatKRW(c.carried_over_amount)}`} valueColor="#00B493" />}
+              <Row label="총 지출" value={`₩${formatKRW(c.totalSpent)}`} />
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function Row({ label, value, valueColor = "#191919" }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-xs" style={{ color: "#888888" }}>{label}</span>
+      <span className="text-xs font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
+    </div>
   );
 }
 
