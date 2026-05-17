@@ -16,13 +16,14 @@ function SetupForm() {
   const carryoverAmount = parseInt(searchParams.get("carryover") ?? "0", 10);
   const isNewCycle = searchParams.get("newcycle") === "1";
 
-  const [step, setStep] = useState(isNewCycle ? 2 : 1); // 새 사이클이면 잔액부터
+  const [step, setStep] = useState(isNewCycle ? 2 : 1);
   const [nickname, setNickname] = useState("");
   const [balance, setBalance] = useState("");
   const [payday, setPayday] = useState("");
   const [hasFixed, setHasFixed] = useState<boolean | null>(null);
   const [fixedExp, setFixedExp] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
   const router = useRouter();
   const { setProfile, setCycle } = useAppStore();
 
@@ -32,23 +33,38 @@ function SetupForm() {
   async function handleComplete() {
     if (submitting) return;
     setSubmitting(true);
+    setSetupError(null);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSubmitting(false); return; }
 
     const fixed = hasFixed && fixedExp ? parseInt(fixedExp, 10) : 0;
 
-    // 새 사이클이면 기존 프로필 유지, 최초 설정이면 upsert
-    const { data: profile } = isNewCycle
-      ? await supabase.from("profiles").select("*").eq("id", user.id).single()
-      : await supabase
-          .from("profiles")
-          .upsert({ id: user.id, nickname, missing_day_policy: "full" as MissingDayPolicy })
-          .select()
-          .single();
+    let profile = null;
+    if (isNewCycle) {
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      profile = data;
+    } else {
+      const { data, error } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, nickname, gender: "male", missing_day_policy: "full" as MissingDayPolicy })
+        .select()
+        .single();
+      if (error) {
+        setSetupError("프로필 저장 실패: " + error.message);
+        setSubmitting(false);
+        return;
+      }
+      profile = data;
+    }
 
-    // 새 사이클
-    const { data: cycle } = await supabase
+    if (!profile) {
+      setSetupError("프로필을 불러오지 못했어요. 다시 시도해주세요.");
+      setSubmitting(false);
+      return;
+    }
+
+    const { data: cycle, error: cycleError } = await supabase
       .from("cycles")
       .insert({
         user_id: user.id,
@@ -62,7 +78,13 @@ function SetupForm() {
       .select()
       .single();
 
-    if (profile) setProfile(profile);
+    if (cycleError) {
+      setSetupError("예산 저장 실패: " + cycleError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    setProfile(profile);
     if (cycle) setCycle(cycle);
     router.push("/");
   }
@@ -79,7 +101,6 @@ function SetupForm() {
 
   return (
     <div className="min-h-screen flex flex-col px-5 pt-12 pb-8 page-fade">
-      {/* 스텝 인디케이터 */}
       <div className="flex gap-2 mb-10">
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
           <div
@@ -91,15 +112,9 @@ function SetupForm() {
       </div>
 
       <div className="flex-1">
-        {step === 1 && (
-          <Step1 nickname={nickname} setNickname={setNickname} />
-        )}
-        {step === 2 && (
-          <Step2 balance={balance} setBalance={setBalance} />
-        )}
-        {step === 3 && (
-          <Step3 payday={payday} setPayday={setPayday} daysLeft={daysLeft} />
-        )}
+        {step === 1 && <Step1 nickname={nickname} setNickname={setNickname} />}
+        {step === 2 && <Step2 balance={balance} setBalance={setBalance} />}
+        {step === 3 && <Step3 payday={payday} setPayday={setPayday} daysLeft={daysLeft} />}
         {step === 4 && (
           <Step4
             hasFixed={hasFixed} setHasFixed={setHasFixed}
@@ -107,6 +122,10 @@ function SetupForm() {
           />
         )}
       </div>
+
+      {setupError && (
+        <p className="text-xs text-center mb-3" style={{ color: "#DC2626" }}>{setupError}</p>
+      )}
 
       <div className="flex gap-3 mt-8">
         {step > 1 && (
@@ -120,9 +139,9 @@ function SetupForm() {
         )}
         <button
           onClick={next}
-          disabled={!canNext}
+          disabled={!canNext || submitting}
           className="flex-1 h-[54px] rounded-xl text-base font-bold text-white btn-press"
-          style={{ background: canNext ? "#111111" : "#BBBBBB" }}
+          style={{ background: canNext && !submitting ? "#111111" : "#BBBBBB" }}
         >
           {step === TOTAL_STEPS ? (submitting ? "설정 중..." : "시작하기") : "다음"}
         </button>
@@ -186,9 +205,7 @@ function Step3({ payday, setPayday, daysLeft }: {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>다음 월급일</h2>
-        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
-          언제 월급이 들어오나요?
-        </p>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>언제 월급이 들어오나요?</p>
       </div>
       <input
         type="date"
@@ -199,10 +216,7 @@ function Step3({ payday, setPayday, daysLeft }: {
         style={{ borderColor: "#E8E6DF", background: "#FFFFFF", color: "#111111" }}
       />
       {daysLeft !== null && daysLeft > 0 && (
-        <div
-          className="rounded-xl px-4 py-3 text-center"
-          style={{ background: "#F0EEE8" }}
-        >
+        <div className="rounded-xl px-4 py-3 text-center" style={{ background: "#F0EEE8" }}>
           <span className="text-sm font-bold" style={{ color: "#111111" }}>
             D-{daysLeft} · {daysLeft}일 동안 관리해요
           </span>
@@ -220,13 +234,9 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>고정 지출</h2>
-        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
-          매달 자동이체되는 금액이 있나요?
-        </p>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>매달 자동이체되는 금액이 있나요?</p>
       </div>
-      <p className="text-xs" style={{ color: "#6B6B6B" }}>
-        해당 금액은 예산에서 먼저 제외됩니다
-      </p>
+      <p className="text-xs" style={{ color: "#6B6B6B" }}>해당 금액은 예산에서 먼저 제외됩니다</p>
       <div className="flex gap-3">
         {[false, true].map((v) => (
           <button
