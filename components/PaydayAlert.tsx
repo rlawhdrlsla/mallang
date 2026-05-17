@@ -4,21 +4,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store/app-store";
 import { isPaydayReached, getPreviousCycleSavings } from "@/lib/budget";
+import { useDailySummaries } from "@/lib/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { formatKRW, today } from "@/lib/utils";
 
 export function PaydayAlert() {
   const cycle = useAppStore((s) => s.cycle);
-  const getDailySummaries = useAppStore((s) => s.getDailySummaries);
+  const summaries = useDailySummaries();
   const [dismissed, setDismissed] = useState(false);
   const [showCarryover, setShowCarryover] = useState(false);
-  const [carryAmount, setCarryAmount] = useState(0);
+
   const router = useRouter();
 
   if (!cycle || dismissed) return null;
   if (!isPaydayReached(cycle.next_payday)) return null;
-
-  const summaries = getDailySummaries();
   const savedAmount = getPreviousCycleSavings(summaries);
 
   async function handleNewCycle(withCarryover: boolean) {

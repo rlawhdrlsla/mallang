@@ -1,14 +1,14 @@
 "use client";
 
 import { useAppStore } from "@/store/app-store";
-import { useShallow } from "zustand/shallow";
+import { useCycleSummary } from "@/lib/hooks";
 import { Card } from "@/components/ui/Card";
 import { formatKRW } from "@/lib/utils";
 import { remainingDaysInCycle } from "@/lib/budget";
 
 export function CycleSummaryCard() {
   const cycle = useAppStore((s) => s.cycle);
-  const summary = useAppStore(useShallow((s) => s.getCycleSummary()));
+  const summary = useCycleSummary();
 
   if (!cycle) return null;
 

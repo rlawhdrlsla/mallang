@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
-import { useShallow } from "zustand/shallow";
+import { useWishlistProgress, useCycleSummary } from "@/lib/hooks";
 import { Card } from "@/components/ui/Card";
 import { formatKRW } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -10,15 +10,17 @@ import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
 export function WishlistCard() {
-  const { wishlistItems, getWishlistProgress, addWishlistItem, removeWishlistItem } = useAppStore();
+  const wishlistItems = useAppStore((s) => s.wishlistItems);
+  const addWishlistItem = useAppStore((s) => s.addWishlistItem);
+  const removeWishlistItem = useAppStore((s) => s.removeWishlistItem);
+  const progressList = useWishlistProgress();
+  const { totalSaved, elapsedDays } = useCycleSummary();
+  const hasNoSaving = elapsedDays === 0 || totalSaved === 0;
+
   const [showAdd, setShowAdd] = useState(false);
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const progressList = getWishlistProgress();
-  const { totalSaved, elapsedDays } = useAppStore(useShallow((s) => s.getCycleSummary()));
-  const hasNoSaving = elapsedDays === 0 || totalSaved === 0;
 
   async function handleAddItem() {
     if (!itemName || !itemPrice) return;
