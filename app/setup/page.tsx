@@ -14,7 +14,7 @@ const TOTAL_STEPS = 4;
 function SetupForm() {
   const searchParams = useSearchParams();
   const carryoverAmount = parseInt(searchParams.get("carryover") ?? "0", 10);
-  const isNewCycle = carryoverAmount > 0;
+  const isNewCycle = searchParams.get("newcycle") === "1";
 
   const [step, setStep] = useState(isNewCycle ? 2 : 1); // 새 사이클이면 잔액부터
   const [nickname, setNickname] = useState("");
@@ -38,12 +38,14 @@ function SetupForm() {
 
     const fixed = hasFixed && fixedExp ? parseInt(fixedExp, 10) : 0;
 
-    // 프로필 upsert
-    const { data: profile } = await supabase
-      .from("profiles")
-      .upsert({ id: user.id, nickname, missing_day_policy: "full" as MissingDayPolicy })
-      .select()
-      .single();
+    // 새 사이클이면 기존 프로필 유지, 최초 설정이면 upsert
+    const { data: profile } = isNewCycle
+      ? await supabase.from("profiles").select("*").eq("id", user.id).single()
+      : await supabase
+          .from("profiles")
+          .upsert({ id: user.id, nickname, missing_day_policy: "full" as MissingDayPolicy })
+          .select()
+          .single();
 
     // 새 사이클
     const { data: cycle } = await supabase

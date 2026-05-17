@@ -26,6 +26,8 @@ function SettingsContent() {
   const [editFixed, setEditFixed] = useState(false);
   const [fixedExp, setFixedExp] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Carryover confirmation state
@@ -90,7 +92,7 @@ function SettingsContent() {
     const supabase = createClient();
     await supabase.from("cycles").update({ ended_at: today() }).eq("id", cycle.id);
     const amt = withCarryover ? carryoverSaved : 0;
-    router.push(`/setup?carryover=${amt}`);
+    router.push(`/setup?newcycle=1&carryover=${amt}`);
   }
 
   function handleNewCycleClick() {
@@ -121,6 +123,22 @@ function SettingsContent() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
+  }
+
+  async function handleDeleteAccount() {
+    setDeletingAccount(true);
+    try {
+      const res = await fetch("/api/delete-account", { method: "DELETE" });
+      if (res.ok) {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        setProfile(null); setCycle(null); setExpenses([]); setWishlistItems([]);
+        router.push("/login");
+      }
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteAccount(false);
+    }
   }
 
   return (
@@ -245,6 +263,14 @@ function SettingsContent() {
           >
             데이터 전체 초기화
           </button>
+          <Divider />
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            className="w-full text-left text-sm font-semibold py-1 mt-1"
+            style={{ color: "#DC2626" }}
+          >
+            회원 탈퇴
+          </button>
         </Card>
       </div>
 
@@ -312,6 +338,30 @@ function SettingsContent() {
             전체 삭제
           </button>
           <button onClick={() => setShowReset(false)} className="w-full h-[54px] rounded-xl text-base font-bold" style={{ background: "#F0EEE8", color: "#111111" }}>
+            취소
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* 회원 탈퇴 확인 */}
+      <BottomSheet open={showDeleteAccount} onClose={() => setShowDeleteAccount(false)} title="회원 탈퇴">
+        <div className="px-4 py-6 space-y-4">
+          <p className="text-sm" style={{ color: "#6B6B6B" }}>
+            계정과 모든 데이터가 영구 삭제됩니다. 이 작업은 되돌릴 수 없어요.
+          </p>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deletingAccount}
+            className="w-full h-[54px] rounded-xl text-base font-bold text-white"
+            style={{ background: deletingAccount ? "#BBBBBB" : "#DC2626" }}
+          >
+            {deletingAccount ? "처리 중..." : "탈퇴하기"}
+          </button>
+          <button
+            onClick={() => setShowDeleteAccount(false)}
+            className="w-full h-[54px] rounded-xl text-base font-bold"
+            style={{ background: "#F0EEE8", color: "#111111" }}
+          >
             취소
           </button>
         </div>
