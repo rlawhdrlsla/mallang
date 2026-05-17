@@ -36,25 +36,25 @@ export function PaydayAlert() {
 
   if (showCarryover) {
     return (
-      <div className="mx-5 mb-3 rounded-2xl p-5 border" style={{ background: "#E6F9F5", borderColor: "#00B493" }}>
-        <p className="text-sm font-bold mb-1" style={{ color: "#00B493" }}>
+      <div className="mx-5 mb-3 rounded-2xl p-5 border" style={{ background: "#ECFDF5", borderColor: "#059669" }}>
+        <p className="text-sm font-bold mb-1" style={{ color: "#059669" }}>
           지난 사이클 절약액: ₩{formatKRW(savedAmount)}
         </p>
-        <p className="text-sm mb-4" style={{ color: "#191919" }}>
+        <p className="text-sm mb-4" style={{ color: "#111111" }}>
           이 금액을 새 예산에 추가할까요?
         </p>
         <div className="flex gap-2">
           <button
             onClick={() => handleNewCycle(true)}
             className="flex-1 h-10 rounded-xl text-sm font-bold text-white"
-            style={{ background: "#00B493" }}
+            style={{ background: "#059669" }}
           >
             추가하기
           </button>
           <button
             onClick={() => handleNewCycle(false)}
             className="flex-1 h-10 rounded-xl text-sm font-bold"
-            style={{ background: "#F7F7F8", color: "#888888" }}
+            style={{ background: "#F0EEE8", color: "#6B6B6B" }}
           >
             건너뛰기
           </button>
@@ -64,21 +64,21 @@ export function PaydayAlert() {
   }
 
   return (
-    <div className="mx-5 mb-3 rounded-2xl p-5 border" style={{ background: "#FFF0EB", borderColor: "#FF6B35" }}>
-      <p className="text-sm font-bold mb-1" style={{ color: "#FF6B35" }}>월급일이 됐어요!</p>
-      <p className="text-sm mb-4" style={{ color: "#191919" }}>새 사이클을 시작할까요?</p>
+    <div className="mx-5 mb-3 rounded-2xl p-5 border" style={{ background: "#FFFBEB", borderColor: "#D97706" }}>
+      <p className="text-sm font-bold mb-1" style={{ color: "#D97706" }}>월급일이 됐어요!</p>
+      <p className="text-sm mb-4" style={{ color: "#111111" }}>새 사이클을 시작할까요?</p>
       <div className="flex gap-2">
         <button
           onClick={() => setShowCarryover(true)}
           className="flex-1 h-10 rounded-xl text-sm font-bold text-white"
-          style={{ background: "#FF6B35" }}
+          style={{ background: "#D97706" }}
         >
           새 사이클 시작
         </button>
         <button
           onClick={() => setDismissed(true)}
           className="flex-1 h-10 rounded-xl text-sm font-bold"
-          style={{ background: "#F7F7F8", color: "#888888" }}
+          style={{ background: "#F0EEE8", color: "#6B6B6B" }}
         >
           나중에
         </button>

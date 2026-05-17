@@ -38,16 +38,6 @@ function SetupForm() {
 
     const fixed = hasFixed && fixedExp ? parseInt(fixedExp, 10) : 0;
 
-    // 이전 사이클 절약액 이월 여부 체크
-    const { data: prevCycle } = await supabase
-      .from("cycles")
-      .select("id")
-      .eq("user_id", user.id)
-      .not("ended_at", "is", null)
-      .order("ended_at", { ascending: false })
-      .limit(1)
-      .single();
-
     // 프로필 upsert
     const { data: profile } = await supabase
       .from("profiles")
@@ -93,7 +83,7 @@ function SetupForm() {
           <div
             key={i}
             className="h-1 flex-1 rounded-full transition-colors duration-300"
-            style={{ background: i < step ? "#FF6B35" : "#EEEEEE" }}
+            style={{ background: i < step ? "#111111" : "#E8E6DF" }}
           />
         ))}
       </div>
@@ -121,7 +111,7 @@ function SetupForm() {
           <button
             onClick={prev}
             className="h-[54px] px-6 rounded-xl text-base font-bold btn-press"
-            style={{ background: "#F7F7F8", color: "#191919" }}
+            style={{ background: "#F0EEE8", color: "#111111" }}
           >
             이전
           </button>
@@ -130,7 +120,7 @@ function SetupForm() {
           onClick={next}
           disabled={!canNext}
           className="flex-1 h-[54px] rounded-xl text-base font-bold text-white btn-press"
-          style={{ background: canNext ? "#FF6B35" : "#BBBBBB" }}
+          style={{ background: canNext ? "#111111" : "#BBBBBB" }}
         >
           {step === TOTAL_STEPS ? (submitting ? "설정 중..." : "시작하기") : "다음"}
         </button>
@@ -145,8 +135,8 @@ function Step1({ nickname, setNickname }: {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#191919" }}>반가워요!</h2>
-        <p className="text-sm mt-1" style={{ color: "#888888" }}>어떻게 불러드릴까요?</p>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>반가워요!</h2>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>어떻게 불러드릴까요?</p>
       </div>
       <input
         type="text"
@@ -155,7 +145,7 @@ function Step1({ nickname, setNickname }: {
         onChange={(e) => setNickname(e.target.value)}
         maxLength={10}
         className="w-full h-14 px-4 rounded-xl text-base outline-none border"
-        style={{ borderColor: "#EEEEEE", background: "#FFFFFF" }}
+        style={{ borderColor: "#E8E6DF", background: "#FFFFFF" }}
       />
     </div>
   );
@@ -165,14 +155,14 @@ function Step2({ balance, setBalance }: { balance: string; setBalance: (v: strin
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#191919" }}>현재 잔액</h2>
-        <p className="text-sm mt-1" style={{ color: "#888888" }}>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>현재 잔액</h2>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
           다음 월급까지 쓸 수 있는 돈을 입력하세요
         </p>
       </div>
       <div
         className="text-[36px] font-extrabold tabular-nums text-right py-4"
-        style={{ color: balance ? "#191919" : "#BBBBBB" }}
+        style={{ color: balance ? "#111111" : "#BBBBBB" }}
       >
         ₩ {balance ? formatKRW(parseInt(balance, 10)) : "0"}
       </div>
@@ -193,8 +183,8 @@ function Step3({ payday, setPayday, daysLeft }: {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#191919" }}>다음 월급일</h2>
-        <p className="text-sm mt-1" style={{ color: "#888888" }}>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>다음 월급일</h2>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
           언제 월급이 들어오나요?
         </p>
       </div>
@@ -204,14 +194,14 @@ function Step3({ payday, setPayday, daysLeft }: {
         min={minDate}
         onChange={(e) => setPayday(e.target.value)}
         className="w-full h-14 px-4 rounded-xl text-base outline-none border"
-        style={{ borderColor: "#EEEEEE", background: "#FFFFFF", color: "#191919" }}
+        style={{ borderColor: "#E8E6DF", background: "#FFFFFF", color: "#111111" }}
       />
       {daysLeft !== null && daysLeft > 0 && (
         <div
           className="rounded-xl px-4 py-3 text-center"
-          style={{ background: "#FFF0EB" }}
+          style={{ background: "#F0EEE8" }}
         >
-          <span className="text-sm font-bold" style={{ color: "#FF6B35" }}>
+          <span className="text-sm font-bold" style={{ color: "#111111" }}>
             D-{daysLeft} · {daysLeft}일 동안 관리해요
           </span>
         </div>
@@ -227,12 +217,12 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#191919" }}>고정 지출</h2>
-        <p className="text-sm mt-1" style={{ color: "#888888" }}>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>고정 지출</h2>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
           매달 자동이체되는 금액이 있나요?
         </p>
       </div>
-      <p className="text-xs" style={{ color: "#888888" }}>
+      <p className="text-xs" style={{ color: "#6B6B6B" }}>
         해당 금액은 예산에서 먼저 제외됩니다
       </p>
       <div className="flex gap-3">
@@ -242,9 +232,9 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
             onClick={() => setHasFixed(v)}
             className="flex-1 h-14 rounded-xl text-base font-bold btn-press border"
             style={{
-              background: hasFixed === v ? "#191919" : "#FFFFFF",
-              color: hasFixed === v ? "#FFFFFF" : "#888888",
-              borderColor: hasFixed === v ? "#191919" : "#EEEEEE",
+              background: hasFixed === v ? "#111111" : "#FFFFFF",
+              color: hasFixed === v ? "#FFFFFF" : "#6B6B6B",
+              borderColor: hasFixed === v ? "#111111" : "#E8E6DF",
             }}
           >
             {v ? "있어요" : "없어요"}
@@ -255,7 +245,7 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
         <>
           <div
             className="text-[36px] font-extrabold tabular-nums text-right py-4"
-            style={{ color: fixedExp ? "#191919" : "#BBBBBB" }}
+            style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}
           >
             ₩ {fixedExp ? formatKRW(parseInt(fixedExp, 10)) : "0"}
           </div>

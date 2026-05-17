@@ -81,13 +81,13 @@ export function WishlistCard() {
     <>
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+          <span className="text-sm font-semibold" style={{ color: "#111111" }}>
             나의 위시리스트
           </span>
           <button
             onClick={() => setShowAdd(true)}
             className="text-sm font-semibold px-3 h-8 rounded-lg btn-press"
-            style={{ background: "#F7F7F8", color: "#FF6B35" }}
+            style={{ background: "#F0EEE8", color: "#111111" }}
           >
             + 추가
           </button>
@@ -106,7 +106,7 @@ export function WishlistCard() {
                 price={item.price}
                 imageUrl={item.image_url}
                 label="오늘부터 절약을 시작해보세요"
-                labelColor="#888888"
+                labelColor="#6B6B6B"
                 onRemove={() => setPendingDeleteId(item.id)}
               />
             ))}
@@ -124,7 +124,7 @@ export function WishlistCard() {
                     ? "이미 달성 가능!"
                     : `${daysNeeded}일 더 아끼면 구매 가능`
                 }
-                labelColor={alreadyAchievable ? "#00B493" : "#888888"}
+                labelColor={alreadyAchievable ? "#059669" : "#6B6B6B"}
                 highlight={alreadyAchievable}
                 onRemove={() => setPendingDeleteId(item.id)}
               />
@@ -143,7 +143,7 @@ export function WishlistCard() {
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="위시리스트 추가">
         {/* 상품 링크로 자동 입력 */}
         <div className="px-4 pt-4 pb-2">
-          <p className="text-xs font-semibold mb-2" style={{ color: "#888888" }}>
+          <p className="text-xs font-semibold mb-2" style={{ color: "#6B6B6B" }}>
             상품 링크로 자동 입력 (선택사항)
           </p>
           <div className="flex gap-2">
@@ -153,14 +153,14 @@ export function WishlistCard() {
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               className="flex-1 h-11 px-4 rounded-xl text-sm outline-none"
-              style={{ background: "#F7F7F8", color: "#191919" }}
+              style={{ background: "#F0EEE8", color: "#111111" }}
             />
             <button
               onClick={handleFetchUrl}
               disabled={!urlInput || fetching}
               className="h-11 px-4 rounded-xl text-sm font-semibold whitespace-nowrap"
               style={{
-                background: urlInput && !fetching ? "#FF6B35" : "#F7F7F8",
+                background: urlInput && !fetching ? "#111111" : "#F0EEE8",
                 color: urlInput && !fetching ? "#FFFFFF" : "#BBBBBB",
               }}
             >
@@ -174,9 +174,9 @@ export function WishlistCard() {
                 src={itemImageUrl}
                 alt=""
                 className="w-12 h-12 rounded-lg object-cover"
-                style={{ border: "1px solid #F0F0F0" }}
+                style={{ border: "1px solid #E8E6DF" }}
               />
-              <span className="text-xs" style={{ color: "#00B493" }}>이미지 가져오기 완료</span>
+              <span className="text-xs" style={{ color: "#059669" }}>이미지 가져오기 완료</span>
             </div>
           )}
         </div>
@@ -189,13 +189,13 @@ export function WishlistCard() {
             onChange={(e) => setItemName(e.target.value)}
             maxLength={30}
             className="w-full h-11 px-4 rounded-xl text-sm outline-none"
-            style={{ background: "#F7F7F8" }}
+            style={{ background: "#F0EEE8" }}
           />
         </div>
         <div className="px-4 pb-2">
           <div
             className="text-[32px] font-extrabold tabular-nums text-right"
-            style={{ color: itemPrice ? "#191919" : "#BBBBBB" }}
+            style={{ color: itemPrice ? "#111111" : "#BBBBBB" }}
           >
             ₩ {itemPrice ? formatKRW(parseInt(itemPrice, 10)) : "0"}
           </div>
@@ -206,7 +206,7 @@ export function WishlistCard() {
             onClick={handleAddItem}
             disabled={!itemName || !itemPrice || saving}
             className="w-full h-[54px] rounded-xl text-base font-bold text-white"
-            style={{ background: itemName && itemPrice ? "#FF6B35" : "#BBBBBB" }}
+            style={{ background: itemName && itemPrice ? "#111111" : "#BBBBBB" }}
           >
             {saving ? "저장 중..." : "추가"}
           </button>
@@ -226,8 +226,8 @@ function WishlistRow({
     <div
       className="flex items-center gap-3 py-3 border-t"
       style={{
-        borderColor: "#F0F0F0",
-        background: highlight ? "#E6F9F5" : "transparent",
+        borderColor: "#E8E6DF",
+        background: highlight ? "#ECFDF5" : "transparent",
         borderRadius: highlight ? 10 : 0,
         padding: highlight ? "12px 10px" : "12px 0",
         marginTop: highlight ? 4 : 0,
@@ -239,15 +239,15 @@ function WishlistRow({
           src={imageUrl}
           alt={name}
           className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-          style={{ border: "1px solid #F0F0F0" }}
+          style={{ border: "1px solid #E8E6DF" }}
         />
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate" style={{ color: "#191919" }}>{name}</p>
+        <p className="text-sm font-semibold truncate" style={{ color: "#111111" }}>{name}</p>
         <p className="text-xs mt-0.5" style={{ color: labelColor }}>{label}</p>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
-        <p className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
+        <p className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
           ₩{formatKRW(price)}
         </p>
         <button

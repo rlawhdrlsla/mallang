@@ -1,8 +1,6 @@
 "use client";
 
 import { useTodaySummary, useRemainingBudget } from "@/lib/hooks";
-import { Card } from "@/components/ui/Card";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatKRW } from "@/lib/utils";
 
 export function TodayBudgetCard() {
@@ -13,36 +11,66 @@ export function TodayBudgetCard() {
 
   const { budget, spent, saved } = todaySummary;
   const isOver = saved < 0;
-  const ratio = budget > 0 ? spent / budget : 1;
+  const ratio = budget > 0 ? Math.min(spent / budget, 1) : 1;
+  const pct = ratio * 100;
 
   return (
-    <Card>
-      <p className="text-sm font-semibold" style={{ color: "#888888" }}>
+    <div
+      style={{
+        background: "#111111",
+        borderRadius: 16,
+        padding: 20,
+      }}
+    >
+      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
         오늘 쓸 수 있는 금액
       </p>
       <div
-        className="text-[40px] font-extrabold tabular-nums mt-1 mb-4 transition-all duration-200"
-        style={{ color: "#191919" }}
+        className="tabular-nums transition-all duration-200"
+        style={{ color: "#FFFFFF", fontSize: 40, fontWeight: 800, marginBottom: 16, lineHeight: 1.1 }}
       >
         ₩{formatKRW(budget)}
       </div>
 
-      <ProgressBar value={ratio} danger={isOver} />
+      {/* Inline progress bar */}
+      <div
+        style={{
+          height: 6,
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.12)",
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            height: 6,
+            borderRadius: 999,
+            width: `${pct}%`,
+            background: isOver ? "#DC2626" : "#FFFFFF",
+            transition: "width 200ms",
+          }}
+        />
+      </div>
 
-      <div className="flex justify-between mt-3">
+      {/* Stats row */}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
-          <p className="text-xs" style={{ color: "#888888" }}>지출</p>
-          <p className="text-base font-bold tabular-nums" style={{ color: "#191919" }}>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>지출</p>
+          <p className="tabular-nums" style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
             ₩{formatKRW(spent)}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs" style={{ color: "#888888" }}>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>
             {isOver ? "초과" : "남은 금액"}
           </p>
           <p
-            className="text-base font-bold tabular-nums"
-            style={{ color: isOver ? "#FF3B30" : "#00B493" }}
+            className="tabular-nums"
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: isOver ? "#F87171" : "#34D399",
+            }}
           >
             {isOver ? `-₩${formatKRW(Math.abs(saved))}` : `₩${formatKRW(saved)}`}
           </p>
@@ -51,17 +79,23 @@ export function TodayBudgetCard() {
 
       {remainingDays > 1 && (
         <div
-          className="mt-3 pt-3 flex items-center justify-between border-t"
-          style={{ borderColor: "#F0F0F0" }}
+          style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <span className="text-xs" style={{ color: "#888888" }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
             월급날까지 {remainingDays}일간 총 사용 가능
           </span>
-          <span className="text-xs font-bold tabular-nums" style={{ color: "#191919" }}>
+          <span className="tabular-nums" style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
             ₩{formatKRW(remainingBalance)}
           </span>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

@@ -19,8 +19,8 @@ export function CategoryTabs({ value, onChange }: CategoryTabsProps) {
           onClick={() => onChange(cat)}
           className="flex-1 h-9 rounded-lg text-sm font-semibold transition-colors duration-150"
           style={{
-            background: value === cat ? "#191919" : "#F7F7F8",
-            color: value === cat ? "#FFFFFF" : "#888888",
+            background: value === cat ? "#111111" : "#F0EEE8",
+            color: value === cat ? "#FFFFFF" : "#6B6B6B",
           }}
         >
           {CATEGORY_LABELS[cat]}

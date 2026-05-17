@@ -24,7 +24,7 @@ export function TomorrowBudgetCard() {
         ₩{formatKRW(tomorrowBudget)}
       </div>
       {todaySaved > 0 && (
-        <p className="text-xs mt-1" style={{ color: "#00B493" }}>
+        <p className="text-xs mt-1" style={{ color: "#059669" }}>
           오늘 ₩{formatKRW(todaySaved)} 절약 반영
         </p>
       )}

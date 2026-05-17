@@ -16,8 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <div className="min-h-screen" style={{ background: "#F7F7F8" }}>
-          <div className="mx-auto relative" style={{ maxWidth: 480, minHeight: "100svh", background: "#F7F7F8" }}>
+        <div className="min-h-screen" style={{ background: "#F8F7F4" }}>
+          <div className="mx-auto relative" style={{ maxWidth: 480, minHeight: "100svh", background: "#F8F7F4" }}>
             {children}
           </div>
         </div>

@@ -28,6 +28,10 @@ function SettingsContent() {
   const [showReset, setShowReset] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Carryover confirmation state
+  const [showCarryoverConfirm, setShowCarryoverConfirm] = useState(false);
+  const [carryoverSaved, setCarryoverSaved] = useState(0);
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="text-sm" style={{ color: "#BBBBBB" }}>불러오는 중...</div></div>;
   }
@@ -81,13 +85,24 @@ function SettingsContent() {
     setFixedExp("");
   }
 
-  async function handleNewCycle() {
+  async function doNewCycle(withCarryover: boolean) {
     if (!cycle) return;
     const supabase = createClient();
-    const summaries = getDailySummaries();
-    const saved = getPreviousCycleSavings(summaries);
     await supabase.from("cycles").update({ ended_at: today() }).eq("id", cycle.id);
-    router.push(`/setup?carryover=${saved}`);
+    const amt = withCarryover ? carryoverSaved : 0;
+    router.push(`/setup?carryover=${amt}`);
+  }
+
+  function handleNewCycleClick() {
+    if (!cycle) return;
+    const summaries = getDailySummaries();
+    const savedAmount = getPreviousCycleSavings(summaries);
+    if (savedAmount <= 0) {
+      doNewCycle(false);
+    } else {
+      setCarryoverSaved(savedAmount);
+      setShowCarryoverConfirm(true);
+    }
   }
 
   async function handleResetAll() {
@@ -111,7 +126,7 @@ function SettingsContent() {
   return (
     <div className="page-fade pb-[80px]">
       <div className="px-5 pt-12 pb-4">
-        <h1 className="text-xl font-bold" style={{ color: "#191919" }}>설정</h1>
+        <h1 className="text-xl font-bold" style={{ color: "#111111" }}>설정</h1>
       </div>
 
       <div className="px-5 space-y-3">
@@ -128,8 +143,8 @@ function SettingsContent() {
         {/* 미입력 날 처리 */}
         <SectionTitle>기록 설정</SectionTitle>
         <Card>
-          <p className="text-sm mb-1" style={{ color: "#191919" }}>며칠 만에 켰을 때 처리 방식</p>
-          <p className="text-xs mb-3" style={{ color: "#888888" }}>미입력 날짜를 어떻게 처리할지 정해요</p>
+          <p className="text-sm mb-1" style={{ color: "#111111" }}>며칠 만에 켰을 때 처리 방식</p>
+          <p className="text-xs mb-3" style={{ color: "#6B6B6B" }}>미입력 날짜를 어떻게 처리할지 정해요</p>
           <div className="flex gap-2">
             {([["full", "예산 소진"] , ["zero", "지출 없음"]] as [MissingDayPolicy, string][]).map(([v, label]) => (
               <button
@@ -137,8 +152,8 @@ function SettingsContent() {
                 onClick={() => savePolicy(v)}
                 className="flex-1 h-9 rounded-lg text-sm font-semibold"
                 style={{
-                  background: profile?.missing_day_policy === v ? "#191919" : "#F7F7F8",
-                  color: profile?.missing_day_policy === v ? "#FFFFFF" : "#888888",
+                  background: profile?.missing_day_policy === v ? "#111111" : "#F0EEE8",
+                  color: profile?.missing_day_policy === v ? "#FFFFFF" : "#6B6B6B",
                 }}
               >
                 {label}
@@ -173,9 +188,9 @@ function SettingsContent() {
         <SectionTitle>사이클 관리</SectionTitle>
         <Card>
           <button
-            onClick={handleNewCycle}
+            onClick={handleNewCycleClick}
             className="w-full text-left text-sm font-semibold py-1"
-            style={{ color: "#FF6B35" }}
+            style={{ color: "#111111" }}
           >
             새 사이클 시작
           </button>
@@ -189,7 +204,7 @@ function SettingsContent() {
           <button
             onClick={handleLogout}
             className="w-full text-left text-sm font-semibold py-1 mt-1"
-            style={{ color: "#888888" }}
+            style={{ color: "#6B6B6B" }}
           >
             로그아웃
           </button>
@@ -197,7 +212,7 @@ function SettingsContent() {
           <button
             onClick={() => setShowReset(true)}
             className="w-full text-left text-sm font-semibold py-1 mt-1"
-            style={{ color: "#FF3B30" }}
+            style={{ color: "#DC2626" }}
           >
             데이터 전체 초기화
           </button>
@@ -213,13 +228,13 @@ function SettingsContent() {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={10}
             className="w-full h-11 px-4 rounded-xl text-sm outline-none"
-            style={{ background: "#F7F7F8" }}
+            style={{ background: "#F0EEE8" }}
           />
           <button
             onClick={saveNickname}
             disabled={saving}
             className="w-full h-[54px] rounded-xl text-base font-bold text-white"
-            style={{ background: "#FF6B35" }}
+            style={{ background: "#111111" }}
           >
             저장
           </button>
@@ -229,46 +244,69 @@ function SettingsContent() {
       {/* 잔액 편집 */}
       <BottomSheet open={editBalance} onClose={() => { setEditBalance(false); setBalance(""); }} title="잔액 수정">
         <div className="px-4 pt-4">
-          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: balance ? "#191919" : "#BBBBBB" }}>
+          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: balance ? "#111111" : "#BBBBBB" }}>
             ₩ {balance ? formatKRW(parseInt(balance, 10)) : "0"}
           </div>
         </div>
         <NumberPad value={balance} onChange={setBalance} />
         <div className="px-4 pb-6">
-          <button onClick={saveBalance} disabled={!balance || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: balance ? "#FF6B35" : "#BBBBBB" }}>저장</button>
+          <button onClick={saveBalance} disabled={!balance || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: balance ? "#111111" : "#BBBBBB" }}>저장</button>
         </div>
       </BottomSheet>
 
       {/* 월급일 편집 */}
       <BottomSheet open={editPayday} onClose={() => setEditPayday(false)} title="월급일 변경">
         <div className="px-4 py-4 space-y-4">
-          <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm outline-none" style={{ background: "#F7F7F8", color: "#191919" }} />
-          <button onClick={savePayday} disabled={saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#FF6B35" }}>저장</button>
+          <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm outline-none" style={{ background: "#F0EEE8", color: "#111111" }} />
+          <button onClick={savePayday} disabled={saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#111111" }}>저장</button>
         </div>
       </BottomSheet>
 
       {/* 고정지출 편집 */}
       <BottomSheet open={editFixed} onClose={() => { setEditFixed(false); setFixedExp(""); }} title="고정 지출 변경">
         <div className="px-4 pt-4">
-          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: fixedExp ? "#191919" : "#BBBBBB" }}>
+          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}>
             ₩ {fixedExp ? formatKRW(parseInt(fixedExp, 10)) : "0"}
           </div>
         </div>
         <NumberPad value={fixedExp} onChange={setFixedExp} />
         <div className="px-4 pb-6">
-          <button onClick={saveFixed} disabled={!fixedExp || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: fixedExp ? "#FF6B35" : "#BBBBBB" }}>저장</button>
+          <button onClick={saveFixed} disabled={!fixedExp || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: fixedExp ? "#111111" : "#BBBBBB" }}>저장</button>
         </div>
       </BottomSheet>
 
       {/* 초기화 확인 */}
       <BottomSheet open={showReset} onClose={() => setShowReset(false)} title="데이터 초기화">
         <div className="px-4 py-6 space-y-4">
-          <p className="text-sm" style={{ color: "#888888" }}>모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없어요.</p>
-          <button onClick={handleResetAll} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#FF3B30" }}>
+          <p className="text-sm" style={{ color: "#6B6B6B" }}>모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없어요.</p>
+          <button onClick={handleResetAll} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#DC2626" }}>
             전체 삭제
           </button>
-          <button onClick={() => setShowReset(false)} className="w-full h-[54px] rounded-xl text-base font-bold" style={{ background: "#F7F7F8", color: "#191919" }}>
+          <button onClick={() => setShowReset(false)} className="w-full h-[54px] rounded-xl text-base font-bold" style={{ background: "#F0EEE8", color: "#111111" }}>
             취소
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* 새 사이클 이월 확인 */}
+      <BottomSheet open={showCarryoverConfirm} onClose={() => setShowCarryoverConfirm(false)} title="이전 사이클 절약액">
+        <div className="px-4 py-6 space-y-4">
+          <p className="text-base font-semibold text-center" style={{ color: "#111111" }}>
+            이전 사이클 절약액 ₩{formatKRW(carryoverSaved)}를 새 예산에 추가할까요?
+          </p>
+          <button
+            onClick={() => { setShowCarryoverConfirm(false); doNewCycle(true); }}
+            className="w-full h-[54px] rounded-xl text-base font-bold text-white"
+            style={{ background: "#111111" }}
+          >
+            추가하기
+          </button>
+          <button
+            onClick={() => { setShowCarryoverConfirm(false); doNewCycle(false); }}
+            className="w-full h-[54px] rounded-xl text-base font-bold"
+            style={{ background: "#F0EEE8", color: "#6B6B6B" }}
+          >
+            건너뛰기
           </button>
         </div>
       </BottomSheet>
@@ -279,21 +317,21 @@ function SettingsContent() {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold px-1 pt-2" style={{ color: "#888888" }}>{children}</p>;
+  return <p className="text-xs font-semibold px-1 pt-2" style={{ color: "#6B6B6B" }}>{children}</p>;
 }
 
 function Divider() {
-  return <div className="my-3" style={{ borderTop: "1px solid #F0F0F0" }} />;
+  return <div className="my-3" style={{ borderTop: "1px solid #E8E6DF" }} />;
 }
 
 function SettingRow({ label, value, onEdit }: { label: string; value?: string; onEdit?: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm" style={{ color: "#888888" }}>{label}</span>
+      <span className="text-sm" style={{ color: "#6B6B6B" }}>{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold" style={{ color: "#191919" }}>{value}</span>
+        <span className="text-sm font-semibold" style={{ color: "#111111" }}>{value}</span>
         {onEdit && (
-          <button onClick={onEdit} className="text-xs font-semibold" style={{ color: "#FF6B35" }}>수정</button>
+          <button onClick={onEdit} className="text-xs font-semibold" style={{ color: "#111111" }}>수정</button>
         )}
       </div>
     </div>

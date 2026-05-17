@@ -44,23 +44,23 @@ function HistoryContent() {
   return (
     <div className="page-fade pb-[160px]">
       <div className="px-5 pt-12 pb-4">
-        <h1 className="text-xl font-bold" style={{ color: "#191919" }}>내역</h1>
+        <h1 className="text-xl font-bold" style={{ color: "#111111" }}>내역</h1>
       </div>
 
       {/* 사이클 요약 */}
       <div className="px-5 mb-4">
         <Card>
-          <p className="text-sm font-semibold mb-3" style={{ color: "#191919" }}>이번 사이클 요약</p>
+          <p className="text-sm font-semibold mb-3" style={{ color: "#111111" }}>이번 사이클 요약</p>
           <div className="flex justify-between">
             <div>
-              <p className="text-xs" style={{ color: "#888888" }}>총 지출</p>
-              <p className="text-base font-bold tabular-nums" style={{ color: "#191919" }}>
+              <p className="text-xs" style={{ color: "#6B6B6B" }}>총 지출</p>
+              <p className="text-base font-bold tabular-nums" style={{ color: "#111111" }}>
                 ₩{formatKRW(totalSpent)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs" style={{ color: "#888888" }}>총 절약</p>
-              <p className="text-base font-bold tabular-nums" style={{ color: "#00B493" }}>
+              <p className="text-xs" style={{ color: "#6B6B6B" }}>총 절약</p>
+              <p className="text-base font-bold tabular-nums" style={{ color: "#059669" }}>
                 ₩{formatKRW(totalSaved)}
               </p>
             </div>
@@ -81,8 +81,8 @@ function HistoryContent() {
             onClick={() => setTab(v)}
             className="flex-1 h-9 rounded-lg text-sm font-semibold"
             style={{
-              background: tab === v ? "#191919" : "#F7F7F8",
-              color: tab === v ? "#FFFFFF" : "#888888",
+              background: tab === v ? "#111111" : "#F0EEE8",
+              color: tab === v ? "#FFFFFF" : "#6B6B6B",
             }}
           >
             {label}
@@ -140,19 +140,19 @@ function CategoryChart({ expenses }: { expenses: Expense[] }) {
 
   return (
     <Card>
-      <p className="text-sm font-semibold mb-4" style={{ color: "#191919" }}>카테고리별 지출</p>
+      <p className="text-sm font-semibold mb-4" style={{ color: "#111111" }}>카테고리별 지출</p>
       <div className="space-y-3">
         {cats.map(([cat, amt]) => (
           <div key={cat}>
             <div className="flex justify-between mb-1">
-              <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+              <span className="text-sm font-semibold" style={{ color: "#111111" }}>
                 {CATEGORY_LABELS[cat]}
               </span>
-              <span className="text-sm tabular-nums" style={{ color: "#888888" }}>
+              <span className="text-sm tabular-nums" style={{ color: "#6B6B6B" }}>
                 ₩{formatKRW(amt)} · {Math.round(amt / total * 100)}%
               </span>
             </div>
-            <div className="h-2 rounded-full" style={{ background: "#F0F0F0" }}>
+            <div className="h-2 rounded-full" style={{ background: "#E8E6DF" }}>
               <div
                 className="h-2 rounded-full transition-all duration-300"
                 style={{
@@ -195,7 +195,7 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
 
   return (
     <Card>
-      <p className="text-sm font-semibold mb-4" style={{ color: "#191919" }}>
+      <p className="text-sm font-semibold mb-4" style={{ color: "#111111" }}>
         {year}년 {month}월
       </p>
       <div className="grid grid-cols-7 gap-1 text-center mb-2">
@@ -209,7 +209,7 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
           const s = byDate[date];
           const isToday = date === todayStr;
           const isSelected = date === selectedDate;
-          const dot = s ? (s.saved >= 0 ? "#00B493" : "#FF3B30") : null;
+          const dot = s ? (s.saved >= 0 ? "#059669" : "#DC2626") : null;
           const isClickable = !!s;
 
           return (
@@ -218,13 +218,13 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
               onClick={() => isClickable && setSelectedDate(isSelected ? null : date)}
               className="aspect-square flex flex-col items-center justify-center rounded-lg relative"
               style={{
-                background: isSelected ? "#FF6B35" : isToday ? "#FFF0EB" : "transparent",
+                background: isSelected ? "#111111" : isToday ? "#F0EEE8" : "transparent",
                 cursor: isClickable ? "pointer" : "default",
               }}
             >
               <span
                 className="text-sm font-semibold"
-                style={{ color: isSelected ? "#FFFFFF" : isToday ? "#FF6B35" : "#191919" }}
+                style={{ color: isSelected ? "#FFFFFF" : isToday ? "#111111" : "#111111" }}
               >
                 {parseInt(date.slice(8))}
               </span>
@@ -237,26 +237,26 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
       </div>
       <div className="flex gap-4 mt-4 justify-center">
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full" style={{ background: "#00B493" }} />
-          <span className="text-xs" style={{ color: "#888888" }}>절약</span>
+          <div className="w-2 h-2 rounded-full" style={{ background: "#059669" }} />
+          <span className="text-xs" style={{ color: "#6B6B6B" }}>절약</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full" style={{ background: "#FF3B30" }} />
-          <span className="text-xs" style={{ color: "#888888" }}>초과</span>
+          <div className="w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />
+          <span className="text-xs" style={{ color: "#6B6B6B" }}>초과</span>
         </div>
       </div>
 
       {selectedDate && selectedSummary && (
-        <div className="mt-4 pt-4 border-t" style={{ borderColor: "#F0F0F0" }}>
+        <div className="mt-4 pt-4 border-t" style={{ borderColor: "#E8E6DF" }}>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+            <span className="text-sm font-semibold" style={{ color: "#111111" }}>
               {formatDateShort(selectedDate)} ({getDayOfWeek(selectedDate)})
             </span>
             <span
               className="text-xs font-bold px-2 py-0.5 rounded-full"
               style={{
-                background: selectedSummary.saved < 0 ? "#FFF0EF" : "#E6F9F5",
-                color: selectedSummary.saved < 0 ? "#FF3B30" : "#00B493",
+                background: selectedSummary.saved < 0 ? "#FEF2F2" : "#ECFDF5",
+                color: selectedSummary.saved < 0 ? "#DC2626" : "#059669",
               }}
             >
               {selectedSummary.saved < 0
@@ -272,7 +272,7 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
                 <div
                   key={e.id}
                   className="flex items-center justify-between py-2 border-t"
-                  style={{ borderColor: "#F0F0F0" }}
+                  style={{ borderColor: "#E8E6DF" }}
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -284,9 +284,9 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
                     >
                       {CATEGORY_LABELS[e.category]}
                     </span>
-                    {e.note && <span className="text-sm" style={{ color: "#888888" }}>{e.note}</span>}
+                    {e.note && <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>}
                   </div>
-                  <span className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
+                  <span className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
                     ₩{formatKRW(e.amount)}
                   </span>
                 </div>
@@ -310,23 +310,23 @@ function DayCard({
   return (
     <Card>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+        <span className="text-sm font-semibold" style={{ color: "#111111" }}>
           {formatDateShort(date)} ({getDayOfWeek(date)})
         </span>
         <span
           className="text-xs font-bold px-2 py-0.5 rounded-full"
           style={{
-            background: isOver ? "#FFF0EF" : "#E6F9F5",
-            color: isOver ? "#FF3B30" : "#00B493",
+            background: isOver ? "#FEF2F2" : "#ECFDF5",
+            color: isOver ? "#DC2626" : "#059669",
           }}
         >
           {isOver ? "초과" : "절약"}
         </span>
       </div>
-      <div className="flex gap-4 text-xs mb-2" style={{ color: "#888888" }}>
+      <div className="flex gap-4 text-xs mb-2" style={{ color: "#6B6B6B" }}>
         <span>예산 ₩{formatKRW(budget)}</span>
         <span>지출 ₩{formatKRW(spent)}</span>
-        <span style={{ color: isOver ? "#FF3B30" : "#00B493" }}>
+        <span style={{ color: isOver ? "#DC2626" : "#059669" }}>
           {isOver ? `초과 ₩${formatKRW(Math.abs(saved))}` : `절약 ₩${formatKRW(saved)}`}
         </span>
       </div>
@@ -334,7 +334,7 @@ function DayCard({
         <div
           key={e.id}
           className="flex items-center justify-between py-2 border-t"
-          style={{ borderColor: "#F0F0F0" }}
+          style={{ borderColor: "#E8E6DF" }}
         >
           <div className="flex items-center gap-2">
             <span
@@ -347,11 +347,11 @@ function DayCard({
               {CATEGORY_LABELS[e.category]}
             </span>
             {e.note && (
-              <span className="text-sm" style={{ color: "#888888" }}>{e.note}</span>
+              <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
+            <span className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
               ₩{formatKRW(e.amount)}
             </span>
             <button onClick={() => onDeleteRequest(e.id)} style={{ color: "#BBBBBB" }}>×</button>
@@ -417,14 +417,14 @@ function PastCycles() {
         return (
           <Card key={c.id}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+              <span className="text-sm font-semibold" style={{ color: "#111111" }}>
                 {c.start_date} ~ {c.ended_at?.slice(0, 10)}
               </span>
               <span
                 className="text-xs font-bold px-2 py-0.5 rounded-full"
                 style={{
-                  background: isProfit ? "#E6F9F5" : "#FFF0EF",
-                  color: isProfit ? "#00B493" : "#FF3B30",
+                  background: isProfit ? "#ECFDF5" : "#FEF2F2",
+                  color: isProfit ? "#059669" : "#DC2626",
                 }}
               >
                 {isProfit ? `절약 ₩${formatKRW(saved)}` : `초과 ₩${formatKRW(Math.abs(effective - c.totalSpent))}`}
@@ -433,7 +433,7 @@ function PastCycles() {
             <div className="space-y-1.5">
               <Row label="예산" value={`₩${formatKRW(c.total_balance)}`} />
               {c.fixed_expenses > 0 && <Row label="고정 지출" value={`₩${formatKRW(c.fixed_expenses)}`} />}
-              {c.carried_over_amount > 0 && <Row label="이월 절약" value={`+₩${formatKRW(c.carried_over_amount)}`} valueColor="#00B493" />}
+              {c.carried_over_amount > 0 && <Row label="이월 절약" value={`+₩${formatKRW(c.carried_over_amount)}`} valueColor="#059669" />}
               <Row label="총 지출" value={`₩${formatKRW(c.totalSpent)}`} />
             </div>
           </Card>
@@ -443,10 +443,10 @@ function PastCycles() {
   );
 }
 
-function Row({ label, value, valueColor = "#191919" }: { label: string; value: string; valueColor?: string }) {
+function Row({ label, value, valueColor = "#111111" }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-xs" style={{ color: "#888888" }}>{label}</span>
+      <span className="text-xs" style={{ color: "#6B6B6B" }}>{label}</span>
       <span className="text-xs font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
     </div>
   );

@@ -20,14 +20,14 @@ export function ConfirmSheet({ open, message, onConfirm, onCancel }: ConfirmShee
           <button
             onClick={onCancel}
             className="flex-1 h-[54px] rounded-xl text-base font-bold"
-            style={{ background: "#F7F7F8", color: "#191919" }}
+            style={{ background: "#F0EEE8", color: "#111111" }}
           >
             취소
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 h-[54px] rounded-xl text-base font-bold text-white"
-            style={{ background: "#FF3B30" }}
+            style={{ background: "#DC2626" }}
           >
             삭제
           </button>

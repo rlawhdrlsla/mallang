@@ -17,7 +17,7 @@ export function CycleSummaryCard() {
 
   return (
     <Card>
-      <p className="text-sm font-semibold mb-3" style={{ color: "#191919" }}>
+      <p className="text-sm font-semibold mb-3" style={{ color: "#111111" }}>
         이번 사이클 요약
       </p>
       <div className="space-y-2">
@@ -25,22 +25,22 @@ export function CycleSummaryCard() {
         <Row
           label="누적 절약"
           value={`₩${formatKRW(totalSaved)}`}
-          valueColor={totalSaved > 0 ? "#00B493" : "#888888"}
+          valueColor={totalSaved > 0 ? "#059669" : "#6B6B6B"}
         />
         <Row
           label="절약한 날"
           value={`${savedDays}일 / ${elapsedDays}일`}
-          valueColor="#FF6B35"
+          valueColor="#111111"
         />
       </div>
     </Card>
   );
 }
 
-function Row({ label, value, valueColor = "#191919" }: { label: string; value: string; valueColor?: string }) {
+function Row({ label, value, valueColor = "#111111" }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-sm" style={{ color: "#888888" }}>{label}</span>
+      <span className="text-sm" style={{ color: "#6B6B6B" }}>{label}</span>
       <span className="text-sm font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
     </div>
   );

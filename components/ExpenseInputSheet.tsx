@@ -68,7 +68,7 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
       <div className="px-4 pt-4 pb-2">
         <div
           className="text-[40px] font-extrabold tabular-nums text-right"
-          style={{ color: amount ? "#191919" : "#BBBBBB" }}
+          style={{ color: amount ? "#111111" : "#BBBBBB" }}
         >
           ₩ {amount ? formatKRW(parseInt(amount, 10)) : "0"}
         </div>
@@ -84,8 +84,8 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
             onClick={() => { setDate(val); setCustomDate(false); }}
             className="h-9 px-4 rounded-lg text-sm font-semibold"
             style={{
-              background: !customDate && date === val ? "#FF6B35" : "#F7F7F8",
-              color: !customDate && date === val ? "#FFFFFF" : "#888888",
+              background: !customDate && date === val ? "#111111" : "#F0EEE8",
+              color: !customDate && date === val ? "#FFFFFF" : "#6B6B6B",
             }}
           >
             {label}
@@ -95,8 +95,8 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
           onClick={() => setCustomDate(true)}
           className="h-9 px-4 rounded-lg text-sm font-semibold"
           style={{
-            background: customDate ? "#FF6B35" : "#F7F7F8",
-            color: customDate ? "#FFFFFF" : "#888888",
+            background: customDate ? "#111111" : "#F0EEE8",
+            color: customDate ? "#FFFFFF" : "#6B6B6B",
           }}
         >
           직접 선택
@@ -111,7 +111,7 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
             max={today()}
             onChange={(e) => setDate(e.target.value)}
             className="w-full h-11 px-4 rounded-xl text-sm outline-none"
-            style={{ background: "#F7F7F8", color: "#191919" }}
+            style={{ background: "#F0EEE8", color: "#111111" }}
           />
         </div>
       )}
@@ -125,8 +125,8 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
           maxLength={30}
           className="w-full h-11 px-4 rounded-xl text-sm outline-none"
           style={{
-            background: "#F7F7F8",
-            color: "#191919",
+            background: "#F0EEE8",
+            color: "#111111",
           }}
         />
       </div>
@@ -139,7 +139,7 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
           disabled={!canSubmit}
           className="w-full h-[54px] rounded-xl text-base font-bold text-white transition-opacity"
           style={{
-            background: canSubmit ? "#FF6B35" : "#BBBBBB",
+            background: canSubmit ? "#111111" : "#BBBBBB",
           }}
         >
           {saving ? "저장 중..." : "완료"}

@@ -31,11 +31,11 @@ export function NumberPad({ value, onChange }: NumberPadProps) {
           key={key}
           onClick={() => press(key)}
           className="h-[60px] rounded-xl text-[22px] font-semibold text-[#191919] btn-press"
-          style={{ background: "#F7F7F8" }}
-          onMouseDown={(e) => (e.currentTarget.style.background = "#EEEEEE")}
-          onMouseUp={(e) => (e.currentTarget.style.background = "#F7F7F8")}
-          onTouchStart={(e) => (e.currentTarget.style.background = "#EEEEEE")}
-          onTouchEnd={(e) => (e.currentTarget.style.background = "#F7F7F8")}
+          style={{ background: "#F0EEE8" }}
+          onMouseDown={(e) => (e.currentTarget.style.background = "#E8E6DF")}
+          onMouseUp={(e) => (e.currentTarget.style.background = "#F0EEE8")}
+          onTouchStart={(e) => (e.currentTarget.style.background = "#E8E6DF")}
+          onTouchEnd={(e) => (e.currentTarget.style.background = "#F0EEE8")}
         >
           {key}
         </button>

@@ -1,19 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F7F7F8;
+  --bg: #F8F7F4;
   --card: #FFFFFF;
-  --border: #EEEEEE;
-  --text-primary: #191919;
-  --text-secondary: #888888;
+  --border: #E8E6DF;
+  --text-primary: #111111;
+  --text-secondary: #6B6B6B;
   --text-disabled: #BBBBBB;
-  --point: #FF6B35;
-  --point-light: #FFF0EB;
-  --success: #00B493;
-  --success-light: #E6F9F5;
-  --danger: #FF3B30;
-  --danger-light: #FFF0EF;
-  --divider: #F0F0F0;
+  --point: #111111;
+  --point-light: #F0EEE8;
+  --success: #059669;
+  --success-light: #ECFDF5;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --warning: #D97706;
+  --warning-light: #FFFBEB;
+  --divider: #E8E6DF;
 }
 
 @theme inline {
@@ -29,6 +31,8 @@
   --color-success-light: var(--success-light);
   --color-danger: var(--danger);
   --color-danger-light: var(--danger-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
   --color-divider: var(--divider);
 }
 

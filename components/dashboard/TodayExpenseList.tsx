@@ -36,7 +36,7 @@ export function TodayExpenseList() {
             <div
               key={e.id}
               className="flex items-center justify-between py-2.5 border-t"
-              style={{ borderColor: "#F0F0F0" }}
+              style={{ borderColor: "#E8E6DF" }}
             >
               <div className="flex items-center gap-3">
                 <span
