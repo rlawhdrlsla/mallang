@@ -1,12 +1,13 @@
 "use client";
 
 import { useAppStore } from "@/store/app-store";
+import { useShallow } from "zustand/shallow";
 import { Card } from "@/components/ui/Card";
 import { formatKRW } from "@/lib/utils";
 
 export function TomorrowBudgetCard() {
   const tomorrowBudget = useAppStore((s) => s.getTomorrowBudget());
-  const todaySummary = useAppStore((s) => s.getTodaySummary());
+  const todaySummary = useAppStore(useShallow((s) => s.getTodaySummary()));
 
   if (tomorrowBudget === null) return null;
 

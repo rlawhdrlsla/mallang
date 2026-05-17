@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
+import { useShallow } from "zustand/shallow";
 import { Card } from "@/components/ui/Card";
 import { formatKRW } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -16,7 +17,7 @@ export function WishlistCard() {
   const [saving, setSaving] = useState(false);
 
   const progressList = getWishlistProgress();
-  const { totalSaved, elapsedDays } = useAppStore((s) => s.getCycleSummary());
+  const { totalSaved, elapsedDays } = useAppStore(useShallow((s) => s.getCycleSummary()));
   const hasNoSaving = elapsedDays === 0 || totalSaved === 0;
 
   async function handleAddItem() {

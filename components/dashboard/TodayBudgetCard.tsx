@@ -1,12 +1,13 @@
 "use client";
 
 import { useAppStore } from "@/store/app-store";
+import { useShallow } from "zustand/shallow";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatKRW } from "@/lib/utils";
 
 export function TodayBudgetCard() {
-  const todaySummary = useAppStore((s) => s.getTodaySummary());
+  const todaySummary = useAppStore(useShallow((s) => s.getTodaySummary()));
 
   if (!todaySummary) return null;
 

@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatKRW, today } from "@/lib/utils";
 
 export function PaydayAlert() {
-  const { cycle, getDailySummaries } = useAppStore();
+  const cycle = useAppStore((s) => s.cycle);
+  const getDailySummaries = useAppStore((s) => s.getDailySummaries);
   const [dismissed, setDismissed] = useState(false);
   const [showCarryover, setShowCarryover] = useState(false);
   const [carryAmount, setCarryAmount] = useState(0);
