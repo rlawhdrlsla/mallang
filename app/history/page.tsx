@@ -2,19 +2,23 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
+import { useDailySummaries, useCycleSummary } from "@/lib/hooks";
 import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { Card } from "@/components/ui/Card";
-import { formatKRW, formatDate, formatDateShort, getDayOfWeek, CATEGORY_LABELS, CATEGORY_COLORS, today } from "@/lib/utils";
+import { formatKRW, formatDateShort, getDayOfWeek, CATEGORY_LABELS, CATEGORY_COLORS, today } from "@/lib/utils";
 import { DailySummary, Expense } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
-import { useAppStore as useStore } from "@/store/app-store";
 
 type Tab = "calendar" | "list";
 
 function HistoryContent() {
   const [tab, setTab] = useState<Tab>("calendar");
-  const { getDailySummaries, expenses, removeExpense, getCycleSummary, isLoading } = useAppStore();
+  const expenses = useAppStore((s) => s.expenses);
+  const removeExpense = useAppStore((s) => s.removeExpense);
+  const isLoading = useAppStore((s) => s.isLoading);
+  const summaries = useDailySummaries();
+  const { totalSpent, totalSaved } = useCycleSummary();
 
   if (isLoading) {
     return (
@@ -24,8 +28,6 @@ function HistoryContent() {
     );
   }
 
-  const summaries = getDailySummaries();
-  const { totalSpent, totalSaved } = getCycleSummary();
   const todayStr = today();
   const pastSummaries = summaries.filter((s) => s.date <= todayStr);
 
@@ -36,7 +38,7 @@ function HistoryContent() {
   }
 
   return (
-    <div className="page-fade pb-[80px]">
+    <div className="page-fade pb-[160px]">
       <div className="px-5 pt-12 pb-4">
         <h1 className="text-xl font-bold" style={{ color: "#191919" }}>내역</h1>
       </div>
@@ -86,7 +88,10 @@ function HistoryContent() {
 
       {tab === "calendar" ? (
         <div className="px-5">
-          <CalendarView summaries={pastSummaries} />
+          <CalendarView
+            summaries={pastSummaries}
+            expenses={expenses.filter((e) => e.date <= todayStr)}
+          />
         </div>
       ) : (
         <div className="px-5 space-y-3">
@@ -146,8 +151,10 @@ function CategoryChart({ expenses }: { expenses: Expense[] }) {
   );
 }
 
-function CalendarView({ summaries }: { summaries: DailySummary[] }) {
+function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expenses: Expense[] }) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const byDate = Object.fromEntries(summaries.map((s) => [s.date, s]));
+
   if (summaries.length === 0) return (
     <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>아직 기록이 없어요</p>
   );
@@ -155,8 +162,6 @@ function CalendarView({ summaries }: { summaries: DailySummary[] }) {
   const firstDate = summaries[0].date;
   const year = parseInt(firstDate.slice(0, 4));
   const month = parseInt(firstDate.slice(5, 7));
-
-  // 달력 날짜 배열 (해당 월 기준)
   const firstDay = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
   const cells: (string | null)[] = [
@@ -166,6 +171,10 @@ function CalendarView({ summaries }: { summaries: DailySummary[] }) {
       return d;
     }),
   ];
+
+  const todayStr = today();
+  const selectedSummary = selectedDate ? byDate[selectedDate] : null;
+  const selectedExpenses = selectedDate ? expenses.filter((e) => e.date === selectedDate) : [];
 
   return (
     <Card>
@@ -181,28 +190,29 @@ function CalendarView({ summaries }: { summaries: DailySummary[] }) {
         {cells.map((date, i) => {
           if (!date) return <div key={i} />;
           const s = byDate[date];
-          const isToday = date === today();
+          const isToday = date === todayStr;
+          const isSelected = date === selectedDate;
           const dot = s ? (s.saved >= 0 ? "#00B493" : "#FF3B30") : null;
+          const isClickable = !!s;
 
           return (
             <div
               key={date}
+              onClick={() => isClickable && setSelectedDate(isSelected ? null : date)}
               className="aspect-square flex flex-col items-center justify-center rounded-lg relative"
               style={{
-                background: isToday ? "#FFF0EB" : "transparent",
+                background: isSelected ? "#FF6B35" : isToday ? "#FFF0EB" : "transparent",
+                cursor: isClickable ? "pointer" : "default",
               }}
             >
               <span
                 className="text-sm font-semibold"
-                style={{ color: isToday ? "#FF6B35" : "#191919" }}
+                style={{ color: isSelected ? "#FFFFFF" : isToday ? "#FF6B35" : "#191919" }}
               >
                 {parseInt(date.slice(8))}
               </span>
-              {dot && (
-                <div
-                  className="w-1.5 h-1.5 rounded-full mt-0.5"
-                  style={{ background: dot }}
-                />
+              {dot && !isSelected && (
+                <div className="w-1.5 h-1.5 rounded-full mt-0.5" style={{ background: dot }} />
               )}
             </div>
           );
@@ -218,6 +228,56 @@ function CalendarView({ summaries }: { summaries: DailySummary[] }) {
           <span className="text-xs" style={{ color: "#888888" }}>초과</span>
         </div>
       </div>
+
+      {selectedDate && selectedSummary && (
+        <div className="mt-4 pt-4 border-t" style={{ borderColor: "#F0F0F0" }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold" style={{ color: "#191919" }}>
+              {formatDateShort(selectedDate)} ({getDayOfWeek(selectedDate)})
+            </span>
+            <span
+              className="text-xs font-bold px-2 py-0.5 rounded-full"
+              style={{
+                background: selectedSummary.saved < 0 ? "#FFF0EF" : "#E6F9F5",
+                color: selectedSummary.saved < 0 ? "#FF3B30" : "#00B493",
+              }}
+            >
+              {selectedSummary.saved < 0
+                ? `초과 ₩${formatKRW(Math.abs(selectedSummary.saved))}`
+                : `절약 ₩${formatKRW(selectedSummary.saved)}`}
+            </span>
+          </div>
+          {selectedExpenses.length === 0 ? (
+            <p className="text-sm text-center py-2" style={{ color: "#BBBBBB" }}>지출 없음</p>
+          ) : (
+            <div className="space-y-0">
+              {selectedExpenses.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex items-center justify-between py-2 border-t"
+                  style={{ borderColor: "#F0F0F0" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: CATEGORY_COLORS[e.category] + "22",
+                        color: CATEGORY_COLORS[e.category],
+                      }}
+                    >
+                      {CATEGORY_LABELS[e.category]}
+                    </span>
+                    {e.note && <span className="text-sm" style={{ color: "#888888" }}>{e.note}</span>}
+                  </div>
+                  <span className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
+                    ₩{formatKRW(e.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

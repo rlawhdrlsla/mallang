@@ -27,7 +27,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="page-fade pb-[80px]">
+    <div className="page-fade pb-[160px]">
       {/* 헤더 */}
       <div className="px-5 pt-12 pb-4 flex items-start justify-between">
         <div>
