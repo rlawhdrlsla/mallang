@@ -7,9 +7,13 @@ import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { ExpenseInputSheet } from "@/components/ExpenseInputSheet";
 import { ResistSheet } from "@/components/ResistSheet";
-import { formatMarshmallow, formatDate, today, diffDays } from "@/lib/utils";
-import { PaydayAlert } from "@/components/PaydayAlert";
 import { QuickResistBar } from "@/components/dashboard/QuickResistBar";
+import { PaydayAlert } from "@/components/PaydayAlert";
+import { formatMarshmallow, today, diffDays } from "@/lib/utils";
+
+const HOME_BG = "#1C1818";
+const PINK = "#F0A0BB";
+const PINK_BTN = "#E06090";
 
 function Dashboard() {
   const [eatOpen, setEatOpen] = useState(false);
@@ -20,115 +24,102 @@ function Dashboard() {
   const isLoading = useAppStore((s) => s.isLoading);
   const expenses = useAppStore((s) => s.expenses);
   const todaySummary = useTodaySummary();
-  const { remainingBalance, remainingDays } = useRemainingBudget();
+  const { remainingDays } = useRemainingBudget();
   const { totalSaved } = useCycleSummary();
   const progressList = useWishlistProgress();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#1C1A1A" }}>
-        <div className="text-sm" style={{ color: "#555555" }}>불러오는 중...</div>
+      <div style={{ background: HOME_BG, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "#555" }}>불러오는 중...</span>
       </div>
     );
   }
 
   const budget = todaySummary?.budget ?? 0;
   const spent = todaySummary?.spent ?? 0;
-  const remaining = Math.max(0, budget - spent);
   const isOver = (todaySummary?.saved ?? 0) < 0;
   const ratio = budget > 0 ? Math.min(spent / budget, 1) : 0;
-  const daysLeft = cycle ? diffDays(today(), cycle.next_payday) : 0;
+  const daysLeft = cycle ? Math.max(0, diffDays(today(), cycle.next_payday)) : 0;
+
+  // 동기부여 메시지
+  const hour = new Date().getHours();
+  let motivation = "오늘도 말랑이와 함께해요 🍥";
+  if (spent === 0 && hour >= 20) motivation = "오늘 하나도 안 먹었네요! 잘했어요 🌙";
+  else if (spent === 0) motivation = "아직 안 먹었어요. 오늘 참아볼까요? 💪";
+  else if (budget > 0 && spent >= budget) motivation = "오늘 예산을 다 썼어요. 내일 더 아껴봐요 🌱";
+  else if (budget > 0 && spent / budget < 0.4) motivation = "잘 아끼고 있어요! 이대로만 가요 🔥";
+  else motivation = "조금만 더 참으면 마쉬멜로가 쌓여요 ⭐";
 
   const todayExpenses = expenses.filter((e) => e.date === today());
 
   return (
-    <div className="page-fade" style={{ background: "#1C1A1A", minHeight: "100vh", paddingBottom: 120 }}>
-      {/* 헤더 */}
-      <div style={{ padding: "52px 20px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div className="page-fade" style={{ background: HOME_BG, minHeight: "100vh", paddingBottom: 100 }}>
+
+      {/* ── 헤더 ── */}
+      <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#2E2C2C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2A2828", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
             🍥
           </div>
-          <span style={{ color: "#FFFFFF", fontWeight: 800, fontSize: 18, letterSpacing: "-0.3px" }}>Mallang</span>
+          <span style={{ color: "#FFFFFF", fontWeight: 800, fontSize: 18 }}>Mallang</span>
         </div>
         {totalSaved > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#2A2828", borderRadius: 99, padding: "6px 12px" }}>
-            <span style={{ fontSize: 13 }}>🔥</span>
-            <span style={{ color: "#F0A0BB", fontSize: 12, fontWeight: 700 }}>{formatMarshmallow(totalSaved)}</span>
+          <div style={{ background: "#2A2828", borderRadius: 99, padding: "5px 12px", display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 12 }}>🔥</span>
+            <span style={{ color: PINK, fontWeight: 700, fontSize: 12 }}>{formatMarshmallow(totalSaved)}</span>
           </div>
         )}
       </div>
 
       <PaydayAlert />
 
-      {/* 동기부여 메시지 카드 */}
-      <MotivationCard spent={spent} budget={budget} remainingDays={remainingDays} />
+      {/* ── 동기부여 카드 ── */}
+      <div style={{ margin: "0 20px 16px", background: "#FFFFFF", borderRadius: 18, padding: "14px 18px" }}>
+        <p style={{ color: "#333", fontSize: 14, fontWeight: 600 }}>{motivation}</p>
+      </div>
 
-      {/* 마쉬멜로 캐릭터 + 오늘 현황 */}
-      <div style={{ margin: "12px 20px 0" }}>
-        {/* 캐릭터 영역 */}
-        <div style={{
-          background: "#252323",
-          borderRadius: 24,
-          padding: "20px 0 16px",
-          textAlign: "center",
-          marginBottom: 20,
-        }}>
-          <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 8 }}>🍥</div>
-          <p style={{ color: "#555555", fontSize: 12, marginBottom: 6 }}>오늘 먹을 수 있는 마쉬멜로</p>
+      {/* ── 마쉬멜로 캐릭터 + 숫자 ── */}
+      <div style={{ margin: "0 20px" }}>
+        <div style={{ background: "#242222", borderRadius: 24, padding: "24px 20px 22px", textAlign: "center" }}>
+          {/* 캐릭터 */}
+          <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 16 }}>🍥</div>
+
+          {/* 라벨 */}
+          <p style={{ color: "#555", fontSize: 12, marginBottom: 6 }}>오늘 먹을 수 있는 마쉬멜로</p>
+
+          {/* 메인 숫자 */}
           <p style={{
-            fontSize: 52,
-            fontWeight: 900,
-            color: isOver ? "#F87171" : "#F0A0BB",
-            letterSpacing: "-1px",
-            lineHeight: 1.1,
+            fontSize: 54, fontWeight: 900, letterSpacing: "-1px", lineHeight: 1,
+            color: isOver ? "#F87171" : PINK,
           }}>
             {budget.toLocaleString("ko-KR")}
           </p>
-          <p style={{ color: "#444444", fontSize: 11, marginTop: 4 }}>개</p>
+          <p style={{ color: "#555", fontSize: 13, marginBottom: 16 }}>개</p>
 
-          {/* 진행 바 */}
-          <div style={{ margin: "14px 20px 10px" }}>
-            <div style={{ height: 6, borderRadius: 99, background: "#333131" }}>
-              <div style={{
-                height: 6, borderRadius: 99,
-                width: `${ratio * 100}%`,
-                background: isOver ? "#F87171" : "#F0A0BB",
-                transition: "width 300ms ease",
-              }} />
-            </div>
+          {/* 진행 바 (시각적으로만 — 숫자 없음) */}
+          <div style={{ height: 8, borderRadius: 99, background: "#333131", marginBottom: 10 }}>
+            <div style={{
+              height: 8, borderRadius: 99, transition: "width 400ms ease",
+              width: `${ratio * 100}%`,
+              background: isOver ? "#F87171" : `linear-gradient(90deg, ${PINK_BTN}, ${PINK})`,
+            }} />
           </div>
 
-          <p style={{ color: "#444444", fontSize: 12 }}>
+          {/* 하단 텍스트 */}
+          <p style={{ color: "#444", fontSize: 12 }}>
             {daysLeft > 0 ? `${daysLeft}일 뒤 봉지가 리셋돼요` : "오늘 봉지가 리셋돼요"}
           </p>
         </div>
 
-        {/* 먹음 / 남음 */}
-        {(spent > 0 || isOver) && (
-          <div style={{ display: "flex", justifyContent: "space-between", margin: "0 4px 16px" }}>
-            <div>
-              <p style={{ color: "#444444", fontSize: 11, marginBottom: 2 }}>먹음</p>
-              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, fontWeight: 700 }}>{formatMarshmallow(spent)}</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ color: "#444444", fontSize: 11, marginBottom: 2 }}>{isOver ? "초과" : "남음"}</p>
-              <p style={{ color: isOver ? "#F87171" : "#6EE7B7", fontSize: 15, fontWeight: 700 }}>
-                {isOver ? `-${formatMarshmallow(Math.abs(todaySummary?.saved ?? 0))}` : formatMarshmallow(remaining)}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* 먹기 / 참기 버튼 */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+        {/* ── 먹기 / 참기 ── */}
+        <div style={{ display: "flex", gap: 12, marginTop: 16, marginBottom: 12 }}>
           <button
             onClick={() => setEatOpen(true)}
             style={{
-              flex: 1, height: 58, borderRadius: 999,
-              background: "#FFFFFF", color: "#111111",
-              fontWeight: 800, fontSize: 20, border: "none",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
+              flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
+              background: "#FFFFFF", color: HOME_BG, border: "none",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
             }}
           >
             먹기
@@ -136,108 +127,82 @@ function Dashboard() {
           <button
             onClick={() => setResistOpen(true)}
             style={{
-              flex: 1, height: 58, borderRadius: 999,
-              background: "#2E2C2C", color: "#FFFFFF",
-              fontWeight: 800, fontSize: 20, border: "none",
+              flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
+              background: "#2E2C2C", color: "#FFFFFF", border: "none",
             }}
           >
             참기
           </button>
         </div>
 
-        {/* 핑크 CTA */}
+        {/* ── 핑크 CTA ── */}
         <button
           onClick={() => setResistOpen(true)}
           style={{
-            width: "100%", height: 54, borderRadius: 16,
-            background: "linear-gradient(135deg, #E06090, #F0A0BB)",
-            color: "#FFFFFF", fontWeight: 800, fontSize: 16, border: "none",
-            boxShadow: "0 4px 16px rgba(224,96,144,0.4)",
+            width: "100%", height: 56, borderRadius: 16, fontSize: 16, fontWeight: 800,
+            background: `linear-gradient(135deg, ${PINK_BTN}, ${PINK})`,
+            color: "#FFFFFF", border: "none",
+            boxShadow: `0 6px 20px rgba(224,96,144,0.45)`,
           }}
         >
           지금 참을게요! 🔥
         </button>
       </div>
 
-      {/* 봉지 묶기 */}
+      {/* ── 봉지 묶기 ── */}
       <div style={{ margin: "20px 20px 0" }}>
         <QuickResistBar />
       </div>
 
-      {/* 목표 봉지 */}
+      {/* ── 목표 봉지 미리보기 ── */}
       {progressList.length > 0 && (
         <div style={{ marginTop: 28 }}>
           <div style={{ padding: "0 20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <span style={{ color: "#FFFFFF", fontWeight: 700, fontSize: 16 }}>목표 봉지</span>
-            <span style={{ color: "#555555", fontSize: 13 }}>전체보기 →</span>
+            <a href="/history" style={{ color: "#666", fontSize: 13, textDecoration: "none" }}>전체보기 →</a>
           </div>
-          <div style={{ display: "flex", gap: 14, paddingLeft: 20, overflowX: "auto", paddingBottom: 4 }}>
+          <div style={{ display: "flex", gap: 14, paddingLeft: 20, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
             {progressList.map(({ item, daysNeeded, alreadyAchievable }) => {
               const pct = Math.min(Math.round((item.current_amount / item.price) * 100), 100);
               return (
-                <div
-                  key={item.id}
-                  style={{
-                    minWidth: 160,
-                    background: "#252323",
-                    borderRadius: 20,
-                    overflow: "hidden",
-                    border: alreadyAchievable ? "1.5px solid #6EE7B7" : "1.5px solid #333131",
-                  }}
-                >
-                  {/* 이미지 영역 */}
+                <div key={item.id} style={{
+                  minWidth: 155, background: "#252323", borderRadius: 18, overflow: "hidden",
+                  border: `1.5px solid ${alreadyAchievable ? "#6EE7B7" : "#333131"}`,
+                  flexShrink: 0,
+                }}>
                   <div style={{
-                    height: 120,
-                    background: item.image_url
-                      ? `url(${item.image_url}) center/cover`
-                      : "linear-gradient(135deg, #3A3838, #2E2C2C)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 40,
+                    height: 110, background: item.image_url ? `url(${item.image_url}) center/cover` : `linear-gradient(135deg, #3A3838, #2A2828)`,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44,
                   }}>
                     {!item.image_url && "🎁"}
                   </div>
-                  {/* 텍스트 */}
-                  <div style={{ padding: "12px 12px 14px" }}>
-                    <p style={{ color: "#FFFFFF", fontSize: 13, fontWeight: 700, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ padding: "10px 12px 14px" }}>
+                    <p style={{ color: "#FFF", fontSize: 13, fontWeight: 700, marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {item.name}
                     </p>
-                    <p style={{ color: "#666666", fontSize: 11, marginBottom: 8 }}>
-                      {formatMarshmallow(item.current_amount)} / {formatMarshmallow(item.price)}
-                    </p>
-                    {/* 진행바 */}
-                    <div style={{ height: 4, borderRadius: 99, background: "#3A3838" }}>
-                      <div style={{
-                        height: 4, borderRadius: 99,
-                        width: `${pct}%`,
-                        background: alreadyAchievable ? "#6EE7B7" : "#F0A0BB",
-                      }} />
+                    <div style={{ height: 4, borderRadius: 99, background: "#3A3838", marginBottom: 6 }}>
+                      <div style={{ height: 4, borderRadius: 99, width: `${pct}%`, background: alreadyAchievable ? "#6EE7B7" : PINK }} />
                     </div>
-                    {!alreadyAchievable && daysNeeded > 0 && (
-                      <p style={{ color: "#555555", fontSize: 10, marginTop: 6 }}>⏰ {daysNeeded}일 더</p>
-                    )}
-                    {alreadyAchievable && (
-                      <p style={{ color: "#6EE7B7", fontSize: 10, marginTop: 6 }}>🎉 지금 구울 수 있어요!</p>
-                    )}
+                    <p style={{ color: "#555", fontSize: 11 }}>
+                      {alreadyAchievable ? "🎉 완성 가능!" : daysNeeded > 0 ? `⏰ ${daysNeeded}일 더` : "적립 중"}
+                    </p>
                   </div>
                 </div>
               );
             })}
-            <div style={{ minWidth: 20 }} />
+            <div style={{ minWidth: 20, flexShrink: 0 }} />
           </div>
         </div>
       )}
 
-      {/* 오늘 지출 내역 */}
+      {/* ── 오늘 먹은 목록 ── */}
       {todayExpenses.length > 0 && (
-        <div style={{ margin: "24px 20px 0" }}>
-          <p style={{ color: "#555555", fontSize: 13, fontWeight: 600, marginBottom: 10 }}>오늘 먹은 마쉬멜로</p>
+        <div style={{ margin: "28px 20px 0" }}>
+          <p style={{ color: "#555", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>오늘 먹은 마쉬멜로</p>
           {todayExpenses.map((e) => (
-            <div key={e.id} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "10px 0", borderBottom: "1px solid #2A2828",
-            }}>
-              <span style={{ color: "#777777", fontSize: 14 }}>{e.note || "마쉬멜로"}</span>
-              <span style={{ color: "#F0A0BB", fontSize: 14, fontWeight: 700 }}>{formatMarshmallow(e.amount)}</span>
+            <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #2A2828" }}>
+              <span style={{ color: "#666", fontSize: 14 }}>{e.note || "마쉬멜로"}</span>
+              <span style={{ color: PINK, fontSize: 14, fontWeight: 700 }}>{formatMarshmallow(e.amount)}</span>
             </div>
           ))}
         </div>
@@ -250,26 +215,6 @@ function Dashboard() {
   );
 }
 
-function MotivationCard({ spent, budget, remainingDays }: { spent: number; budget: number; remainingDays: number }) {
-  const hour = new Date().getHours();
-  let msg = "오늘도 말랑이와 함께해요 🍥";
-  if (spent === 0 && hour >= 20) msg = "오늘 하나도 안 먹었네요! 잘했어요 🌙";
-  else if (spent === 0) msg = "아직 마쉬멜로를 먹지 않았어요. 오늘 참아볼까요? 💪";
-  else if (budget > 0 && spent >= budget) msg = "오늘 예산을 다 썼어요. 내일 더 아껴봐요 🌱";
-  else if (budget > 0 && spent / budget < 0.3) msg = "잘 아끼고 있어요! 이대로만 가요 🔥";
-  else msg = "조금만 더 참으면 마쉬멜로가 쌓여요 ⭐";
-
-  return (
-    <div style={{ margin: "0 20px 0", background: "#FFFFFF", borderRadius: 20, padding: "14px 18px" }}>
-      <p style={{ color: "#333333", fontSize: 14, fontWeight: 600 }}>{msg}</p>
-    </div>
-  );
-}
-
 export default function Home() {
-  return (
-    <DataLoader>
-      <Dashboard />
-    </DataLoader>
-  );
+  return <DataLoader><Dashboard /></DataLoader>;
 }

@@ -129,11 +129,11 @@ export function QuickResistBar() {
 
   return (
     <>
-      <div className="rounded-2xl p-4" style={{ background: "#F8F7F4" }}>
-        <p className="text-sm font-bold mb-1" style={{ color: "#111111" }}>
+      <div className="rounded-2xl p-4" style={{ background: "#242222" }}>
+        <p className="text-sm font-bold mb-1" style={{ color: "#FFFFFF" }}>
           🪢 봉지 묶기
         </p>
-        <p className="text-xs mb-3" style={{ color: "#6B6B6B" }}>
+        <p className="text-xs mb-3" style={{ color: "#666666" }}>
           참는 기간 동안 마쉬멜로를 먹지 않아요
         </p>
         <div className="flex gap-2">
@@ -147,13 +147,13 @@ export function QuickResistBar() {
                 disabled={maxDays <= 0}
                 className="flex-1 flex flex-col items-center py-2.5 rounded-xl"
                 style={{
-                  background: "#FFFFFF",
-                  border: "1px solid #E8E6DF",
+                  background: "#333131",
+                  border: "1px solid #3A3838",
                   opacity: maxDays <= 0 ? 0.4 : 1,
                 }}
               >
-                <span className="text-xs font-bold" style={{ color: "#111111" }}>{opt.label}</span>
-                <span className="text-xs mt-0.5" style={{ color: "#059669" }}>+{formatMarshmallow(accumulated)}</span>
+                <span className="text-xs font-bold" style={{ color: "#FFFFFF" }}>{opt.label}</span>
+                <span className="text-xs mt-0.5" style={{ color: "#6EE7B7" }}>+{formatMarshmallow(accumulated)}</span>
               </button>
             );
           })}
