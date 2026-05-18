@@ -40,16 +40,22 @@ export function useCycleSummary() {
 }
 
 export function useRemainingBudget(): { remainingBalance: number; remainingDays: number } {
+  const cycle = useAppStore((s) => s.cycle);
   const summaries = useDailySummaries();
   return useMemo(() => {
+    if (!cycle) return { remainingBalance: 0, remainingDays: 0 };
     const todayStr = today();
     const idx = summaries.findIndex((s) => s.date === todayStr);
     if (idx === -1) return { remainingBalance: 0, remainingDays: 0 };
-    const s = summaries[idx];
+    // Use actual balance to avoid floor-rounding accumulation errors
+    const effectiveBalance = cycle.total_balance + cycle.carried_over_amount;
+    const totalSpent = summaries
+      .filter((s) => s.date <= todayStr)
+      .reduce((acc, s) => acc + s.spent, 0);
+    const remainingBalance = Math.max(0, effectiveBalance - totalSpent);
     const remainingDays = summaries.length - idx;
-    const remainingBalance = Math.max(0, s.budget * remainingDays - s.spent);
     return { remainingBalance, remainingDays };
-  }, [summaries]);
+  }, [cycle, summaries]);
 }
 
 export function useWishlistProgress(): WishlistProgress[] {

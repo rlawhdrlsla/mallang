@@ -23,8 +23,6 @@ function SettingsContent() {
   const [balance, setBalance] = useState("");
   const [editPayday, setEditPayday] = useState(false);
   const [payday, setPayday] = useState(cycle?.next_payday ?? "");
-  const [editFixed, setEditFixed] = useState(false);
-  const [fixedExp, setFixedExp] = useState("");
   const [showReset, setShowReset] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -74,17 +72,6 @@ function SettingsContent() {
     if (data) setCycle(data);
     setSaving(false);
     setEditPayday(false);
-  }
-
-  async function saveFixed() {
-    if (!cycle || !fixedExp) return;
-    setSaving(true);
-    const supabase = createClient();
-    const { data } = await supabase.from("cycles").update({ fixed_expenses: parseInt(fixedExp, 10) }).eq("id", cycle.id).select().single();
-    if (data) setCycle(data);
-    setSaving(false);
-    setEditFixed(false);
-    setFixedExp("");
   }
 
   async function doNewCycle(withCarryover: boolean) {
@@ -193,12 +180,6 @@ function SettingsContent() {
             label="마쉬멜로 받는 날"
             value={cycle?.next_payday ?? "-"}
             onEdit={() => setEditPayday(true)}
-          />
-          <Divider />
-          <SettingRow
-            label="고정 지출"
-            value={cycle ? formatMarshmallow(cycle.fixed_expenses) : "-"}
-            onEdit={() => setEditFixed(true)}
           />
           {cycle && cycle.carried_over_amount > 0 && (
             <>
@@ -314,19 +295,6 @@ function SettingsContent() {
         <div className="px-4 py-4 space-y-4">
           <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm outline-none" style={{ background: "#F0EEE8", color: "#111111" }} />
           <button onClick={savePayday} disabled={saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#111111" }}>저장</button>
-        </div>
-      </BottomSheet>
-
-      {/* 고정지출 편집 */}
-      <BottomSheet open={editFixed} onClose={() => { setEditFixed(false); setFixedExp(""); }} title="고정 지출 변경">
-        <div className="px-4 pt-4">
-          <div className="text-[32px] font-extrabold text-right" style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}>
-            {fixedExp ? formatMarshmallow(parseInt(fixedExp, 10)) : "0개"}
-          </div>
-        </div>
-        <NumberPad value={fixedExp} onChange={setFixedExp} />
-        <div className="px-4 pb-6">
-          <button onClick={saveFixed} disabled={!fixedExp || saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: fixedExp ? "#111111" : "#BBBBBB" }}>저장</button>
         </div>
       </BottomSheet>
 

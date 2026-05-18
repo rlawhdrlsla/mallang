@@ -22,7 +22,7 @@ export function computeDailySummaries(
   }
 
   const totalDays = allDates.length;
-  const effectiveBalance = cycle.total_balance - cycle.fixed_expenses + cycle.carried_over_amount;
+  const effectiveBalance = cycle.total_balance + cycle.carried_over_amount;
 
   const summaries: DailySummary[] = [];
   let cumulativeSpent = 0;
@@ -72,11 +72,8 @@ export function getTomorrowBudget(summaries: DailySummary[]): number | null {
   const todayStr = today();
   const idx = summaries.findIndex((s) => s.date === todayStr);
   if (idx === -1 || idx + 1 >= summaries.length) return null;
-  const todaySummary = summaries[idx];
-  const remainingDays = summaries.length - idx;
-  const remainingBalance = todaySummary.budget * remainingDays - todaySummary.spent;
-  if (remainingDays - 1 <= 0) return null;
-  return Math.floor(Math.max(remainingBalance, 0) / (remainingDays - 1));
+  // summaries[idx+1].budget already reflects today's spending via rolling calc
+  return summaries[idx + 1].budget;
 }
 
 export function getCycleSummary(summaries: DailySummary[]) {
