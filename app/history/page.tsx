@@ -7,7 +7,7 @@ import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { Card } from "@/components/ui/Card";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
-import { formatKRW, formatDateShort, getDayOfWeek, CATEGORY_LABELS, CATEGORY_COLORS, today } from "@/lib/utils";
+import { formatMarshmallow, formatDateShort, getDayOfWeek, today } from "@/lib/utils";
 import { DailySummary, Expense, Cycle } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 
@@ -47,35 +47,30 @@ function HistoryContent() {
         <h1 className="text-xl font-bold" style={{ color: "#111111" }}>내역</h1>
       </div>
 
-      {/* 사이클 요약 */}
+      {/* 봉지 요약 */}
       <div className="px-5 mb-4">
         <Card>
-          <p className="text-sm font-semibold mb-3" style={{ color: "#111111" }}>이번 사이클 요약</p>
+          <p className="text-sm font-semibold mb-3" style={{ color: "#111111" }}>이번 봉지 요약</p>
           <div className="flex justify-between">
             <div>
-              <p className="text-xs" style={{ color: "#6B6B6B" }}>총 지출</p>
+              <p className="text-xs" style={{ color: "#6B6B6B" }}>먹은 마쉬멜로</p>
               <p className="text-base font-bold tabular-nums" style={{ color: "#111111" }}>
-                ₩{formatKRW(totalSpent)}
+                {formatMarshmallow(totalSpent)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs" style={{ color: "#6B6B6B" }}>총 절약</p>
+              <p className="text-xs" style={{ color: "#6B6B6B" }}>구운 마쉬멜로</p>
               <p className="text-base font-bold tabular-nums" style={{ color: "#059669" }}>
-                ₩{formatKRW(totalSaved)}
+                {formatMarshmallow(totalSaved)}
               </p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* 카테고리 차트 */}
-      <div className="px-5 mb-4">
-        <CategoryChart expenses={expenses.filter((e) => e.date <= todayStr)} />
-      </div>
-
       {/* 탭 */}
       <div className="flex gap-2 px-5 mb-4">
-        {([["calendar", "캘린더"], ["list", "날짜별"], ["past", "지난 사이클"]] as [Tab, string][]).map(([v, label]) => (
+        {([["calendar", "캘린더"], ["list", "날짜별"], ["past", "지난 봉지"]] as [Tab, string][]).map(([v, label]) => (
           <button
             key={v}
             onClick={() => setTab(v)}
@@ -118,53 +113,13 @@ function HistoryContent() {
 
       <ConfirmSheet
         open={!!pendingDeleteId}
-        message="이 지출을 삭제할까요?"
+        message="이 마쉬멜로 기록을 삭제할까요?"
         onConfirm={confirmDelete}
         onCancel={() => setPendingDeleteId(null)}
       />
 
       <BottomNav />
     </div>
-  );
-}
-
-function CategoryChart({ expenses }: { expenses: Expense[] }) {
-  const totals: Record<string, number> = {};
-  for (const e of expenses) {
-    totals[e.category] = (totals[e.category] ?? 0) + e.amount;
-  }
-  const total = Object.values(totals).reduce((a, b) => a + b, 0);
-  if (total === 0) return null;
-
-  const cats = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-
-  return (
-    <Card>
-      <p className="text-sm font-semibold mb-4" style={{ color: "#111111" }}>카테고리별 지출</p>
-      <div className="space-y-3">
-        {cats.map(([cat, amt]) => (
-          <div key={cat}>
-            <div className="flex justify-between mb-1">
-              <span className="text-sm font-semibold" style={{ color: "#111111" }}>
-                {CATEGORY_LABELS[cat]}
-              </span>
-              <span className="text-sm tabular-nums" style={{ color: "#6B6B6B" }}>
-                ₩{formatKRW(amt)} · {Math.round(amt / total * 100)}%
-              </span>
-            </div>
-            <div className="h-2 rounded-full" style={{ background: "#E8E6DF" }}>
-              <div
-                className="h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: `${amt / total * 100}%`,
-                  background: CATEGORY_COLORS[cat],
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
   );
 }
 
@@ -209,7 +164,8 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
           const s = byDate[date];
           const isToday = date === todayStr;
           const isSelected = date === selectedDate;
-          const dot = s ? (s.saved >= 0 ? "#059669" : "#DC2626") : null;
+          const isLocked = s?.locked;
+          const dot = s && !isLocked ? (s.saved >= 0 ? "#059669" : "#DC2626") : null;
           const isClickable = !!s;
 
           return (
@@ -224,13 +180,15 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
             >
               <span
                 className="text-sm font-semibold"
-                style={{ color: isSelected ? "#FFFFFF" : isToday ? "#111111" : "#111111" }}
+                style={{ color: isSelected ? "#FFFFFF" : "#111111" }}
               >
                 {parseInt(date.slice(8))}
               </span>
-              {dot && !isSelected && (
+              {isLocked && !isSelected ? (
+                <div className="text-[8px] mt-0.5">🪢</div>
+              ) : dot && !isSelected ? (
                 <div className="w-1.5 h-1.5 rounded-full mt-0.5" style={{ background: dot }} />
-              )}
+              ) : null}
             </div>
           );
         })}
@@ -238,11 +196,15 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
       <div className="flex gap-4 mt-4 justify-center">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full" style={{ background: "#059669" }} />
-          <span className="text-xs" style={{ color: "#6B6B6B" }}>절약</span>
+          <span className="text-xs" style={{ color: "#6B6B6B" }}>구운 날</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full" style={{ background: "#DC2626" }} />
-          <span className="text-xs" style={{ color: "#6B6B6B" }}>초과</span>
+          <span className="text-xs" style={{ color: "#6B6B6B" }}>초과한 날</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]">🪢</span>
+          <span className="text-xs" style={{ color: "#6B6B6B" }}>봉지 묶은 날</span>
         </div>
       </div>
 
@@ -252,20 +214,26 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
             <span className="text-sm font-semibold" style={{ color: "#111111" }}>
               {formatDateShort(selectedDate)} ({getDayOfWeek(selectedDate)})
             </span>
-            <span
-              className="text-xs font-bold px-2 py-0.5 rounded-full"
-              style={{
-                background: selectedSummary.saved < 0 ? "#FEF2F2" : "#ECFDF5",
-                color: selectedSummary.saved < 0 ? "#DC2626" : "#059669",
-              }}
-            >
-              {selectedSummary.saved < 0
-                ? `초과 ₩${formatKRW(Math.abs(selectedSummary.saved))}`
-                : `절약 ₩${formatKRW(selectedSummary.saved)}`}
-            </span>
+            {selectedSummary.locked ? (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#F0EEE8", color: "#6B6B6B" }}>
+                🪢 봉지 묶은 날
+              </span>
+            ) : (
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: selectedSummary.saved < 0 ? "#FEF2F2" : "#ECFDF5",
+                  color: selectedSummary.saved < 0 ? "#DC2626" : "#059669",
+                }}
+              >
+                {selectedSummary.saved < 0
+                  ? `초과 ${formatMarshmallow(Math.abs(selectedSummary.saved))}`
+                  : `+${formatMarshmallow(selectedSummary.saved)} 구움`}
+              </span>
+            )}
           </div>
           {selectedExpenses.length === 0 ? (
-            <p className="text-sm text-center py-2" style={{ color: "#BBBBBB" }}>지출 없음</p>
+            <p className="text-sm text-center py-2" style={{ color: "#BBBBBB" }}>먹은 마쉬멜로 없음</p>
           ) : (
             <div className="space-y-0">
               {selectedExpenses.map((e) => (
@@ -274,20 +242,13 @@ function CalendarView({ summaries, expenses }: { summaries: DailySummary[]; expe
                   className="flex items-center justify-between py-2 border-t"
                   style={{ borderColor: "#E8E6DF" }}
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                      style={{
-                        background: CATEGORY_COLORS[e.category] + "22",
-                        color: CATEGORY_COLORS[e.category],
-                      }}
-                    >
-                      {CATEGORY_LABELS[e.category]}
-                    </span>
-                    {e.note && <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>}
-                  </div>
+                  {e.note ? (
+                    <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>
+                  ) : (
+                    <span className="text-sm" style={{ color: "#BBBBBB" }}>마쉬멜로</span>
+                  )}
                   <span className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
-                    ₩{formatKRW(e.amount)}
+                    {formatMarshmallow(e.amount)}
                   </span>
                 </div>
               ))}
@@ -304,8 +265,23 @@ function DayCard({
 }: {
   summary: DailySummary; expenses: Expense[]; onDeleteRequest: (id: string) => void;
 }) {
-  const { date, budget, spent, saved } = summary;
+  const { date, budget, spent, saved, locked } = summary;
   const isOver = saved < 0;
+
+  if (locked) {
+    return (
+      <Card>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold" style={{ color: "#111111" }}>
+            {formatDateShort(date)} ({getDayOfWeek(date)})
+          </span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#F0EEE8", color: "#6B6B6B" }}>
+            🪢 봉지 묶은 날
+          </span>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -320,14 +296,14 @@ function DayCard({
             color: isOver ? "#DC2626" : "#059669",
           }}
         >
-          {isOver ? "초과" : "절약"}
+          {isOver ? "초과" : "구움"}
         </span>
       </div>
       <div className="flex gap-4 text-xs mb-2" style={{ color: "#6B6B6B" }}>
-        <span>예산 ₩{formatKRW(budget)}</span>
-        <span>지출 ₩{formatKRW(spent)}</span>
+        <span>예산 {formatMarshmallow(budget)}</span>
+        <span>먹음 {formatMarshmallow(spent)}</span>
         <span style={{ color: isOver ? "#DC2626" : "#059669" }}>
-          {isOver ? `초과 ₩${formatKRW(Math.abs(saved))}` : `절약 ₩${formatKRW(saved)}`}
+          {isOver ? `초과 ${formatMarshmallow(Math.abs(saved))}` : `+${formatMarshmallow(saved)} 구움`}
         </span>
       </div>
       {expenses.map((e) => (
@@ -336,23 +312,14 @@ function DayCard({
           className="flex items-center justify-between py-2 border-t"
           style={{ borderColor: "#E8E6DF" }}
         >
-          <div className="flex items-center gap-2">
-            <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{
-                background: CATEGORY_COLORS[e.category] + "22",
-                color: CATEGORY_COLORS[e.category],
-              }}
-            >
-              {CATEGORY_LABELS[e.category]}
-            </span>
-            {e.note && (
-              <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>
-            )}
-          </div>
+          {e.note ? (
+            <span className="text-sm" style={{ color: "#6B6B6B" }}>{e.note}</span>
+          ) : (
+            <span className="text-sm" style={{ color: "#BBBBBB" }}>마쉬멜로</span>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
-              ₩{formatKRW(e.amount)}
+              {formatMarshmallow(e.amount)}
             </span>
             <button onClick={() => onDeleteRequest(e.id)} style={{ color: "#BBBBBB" }}>×</button>
           </div>
@@ -405,7 +372,7 @@ function PastCycles() {
     return <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>불러오는 중...</p>;
   }
   if (!cycles.length) {
-    return <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>아직 종료된 사이클이 없어요</p>;
+    return <p className="text-sm text-center py-8" style={{ color: "#BBBBBB" }}>아직 완성된 봉지가 없어요</p>;
   }
 
   return (
@@ -427,14 +394,14 @@ function PastCycles() {
                   color: isProfit ? "#059669" : "#DC2626",
                 }}
               >
-                {isProfit ? `절약 ₩${formatKRW(saved)}` : `초과 ₩${formatKRW(Math.abs(effective - c.totalSpent))}`}
+                {isProfit ? `+${formatMarshmallow(saved)} 구움` : `초과 ${formatMarshmallow(Math.abs(effective - c.totalSpent))}`}
               </span>
             </div>
             <div className="space-y-1.5">
-              <Row label="예산" value={`₩${formatKRW(c.total_balance)}`} />
-              {c.fixed_expenses > 0 && <Row label="고정 지출" value={`₩${formatKRW(c.fixed_expenses)}`} />}
-              {c.carried_over_amount > 0 && <Row label="이월 절약" value={`+₩${formatKRW(c.carried_over_amount)}`} valueColor="#059669" />}
-              <Row label="총 지출" value={`₩${formatKRW(c.totalSpent)}`} />
+              <Row label="총 마쉬멜로" value={formatMarshmallow(c.total_balance)} />
+              {c.fixed_expenses > 0 && <Row label="고정 지출" value={formatMarshmallow(c.fixed_expenses)} />}
+              {c.carried_over_amount > 0 && <Row label="이월 마쉬멜로" value={`+${formatMarshmallow(c.carried_over_amount)}`} valueColor="#059669" />}
+              <Row label="먹은 마쉬멜로" value={formatMarshmallow(c.totalSpent)} />
             </div>
           </Card>
         );

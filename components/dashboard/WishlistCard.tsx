@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
+import { BagShareCard } from "@/components/BagShareCard";
 
 const MAX_GOAL_BAGS = 3;
 
@@ -29,6 +30,7 @@ export function WishlistCard() {
   const [transferring, setTransferring] = useState(false);
   const [completingItem, setCompletingItem] = useState<WishlistItem | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [shareCard, setShareCard] = useState<{ name: string; price: number; saved: number } | null>(null);
 
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
@@ -149,10 +151,14 @@ export function WishlistCard() {
       if (expense) addExpense(expense);
     }
 
+    const savedAmount = completingItem.current_amount;
+    const itemName = completingItem.name;
+    const itemPrice = completingItem.price;
     await supabase.from("wishlist_items").delete().eq("id", completingItem.id);
     removeWishlistItem(completingItem.id);
     setCompleting(false);
     setCompletingItem(null);
+    setShareCard({ name: itemName, price: itemPrice, saved: savedAmount });
   }
 
   return (
@@ -285,6 +291,17 @@ export function WishlistCard() {
           </div>
         )}
       </BottomSheet>
+
+      {/* 봉지 완성 공유 카드 */}
+      {shareCard && (
+        <BagShareCard
+          open={!!shareCard}
+          onClose={() => setShareCard(null)}
+          itemName={shareCard.name}
+          targetPrice={shareCard.price}
+          savedAmount={shareCard.saved}
+        />
+      )}
 
       {/* 봉지 추가 시트 */}
       <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="새 마쉬멜로 봉지">

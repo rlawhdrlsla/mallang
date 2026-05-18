@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/app-store";
-import { today } from "@/lib/utils";
+import { today, diffDays } from "@/lib/utils";
 
 export function DataLoader({ children }: { children: React.ReactNode }) {
   const { setProfile, setCycle, setExpenses, setWishlistItems, setLockPeriods, setLoading } = useAppStore();
@@ -68,7 +68,24 @@ export function DataLoader({ children }: { children: React.ReactNode }) {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
-        setWishlistItems(wishlist ?? []);
+        // 매일 자동 저축 처리 (앱 열 때 밀린 날수만큼 적립)
+        const daysToProcess = diffDays(cycle.last_active_date, todayStr);
+        let updatedWishlist = wishlist ?? [];
+        if (daysToProcess > 0 && updatedWishlist.length > 0) {
+          const itemsToUpdate = updatedWishlist.filter((w) => w.daily_auto_save > 0 && w.current_amount < w.price);
+          for (const item of itemsToUpdate) {
+            const newAmount = Math.min(item.price, item.current_amount + item.daily_auto_save * daysToProcess);
+            if (newAmount !== item.current_amount) {
+              await supabase
+                .from("wishlist_items")
+                .update({ current_amount: newAmount })
+                .eq("id", item.id);
+              updatedWishlist = updatedWishlist.map((w) => w.id === item.id ? { ...w, current_amount: newAmount } : w);
+            }
+          }
+        }
+
+        setWishlistItems(updatedWishlist);
 
         // 참기 잠금 기간
         const { data: lockPeriods } = await supabase
