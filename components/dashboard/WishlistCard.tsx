@@ -5,7 +5,7 @@ import { useAppStore } from "@/store/app-store";
 import { useWishlistProgress, useCycleSummary, useRemainingBudget } from "@/lib/hooks";
 import { WishlistItem } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
-import { formatKRW, today } from "@/lib/utils";
+import { formatMarshmallow, today } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -101,7 +101,6 @@ export function WishlistCard() {
     setPurchaseItem(null);
   }
 
-  // 구매 후 예산 계산
   const price = purchaseItem?.price ?? 0;
   const afterBalance = remainingBalance - price;
   const currentDailyBudget = remainingDays > 0 ? Math.floor(remainingBalance / remainingDays) : 0;
@@ -112,7 +111,7 @@ export function WishlistCard() {
     <>
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold" style={{ color: "#111111" }}>나의 위시리스트</span>
+          <span className="text-sm font-semibold" style={{ color: "#111111" }}>굽는 중인 마쉬멜로</span>
           <button
             onClick={() => setShowAdd(true)}
             className="text-sm font-semibold px-3 h-8 rounded-lg btn-press"
@@ -123,13 +122,13 @@ export function WishlistCard() {
         </div>
 
         {wishlistItems.length === 0 ? (
-          <p className="text-sm text-center py-6" style={{ color: "#BBBBBB" }}>갖고 싶은 것을 추가해보세요</p>
+          <p className="text-sm text-center py-6" style={{ color: "#BBBBBB" }}>갖고 싶은 걸 등록해보세요</p>
         ) : hasNoSaving ? (
           progressList.map(({ item }) => (
-            <WishlistRow
+            <GoalRow
               key={item.id}
               item={item}
-              label="오늘부터 절약을 시작해보세요"
+              label="오늘부터 아끼기 시작해봐요"
               labelColor="#6B6B6B"
               onRemove={() => setPendingDeleteId(item.id)}
               onPurchase={() => setPurchaseItem(item)}
@@ -137,10 +136,10 @@ export function WishlistCard() {
           ))
         ) : (
           progressList.map(({ item, daysNeeded, alreadyAchievable }) => (
-            <WishlistRow
+            <GoalRow
               key={item.id}
               item={item}
-              label={alreadyAchievable ? "이미 달성 가능!" : `${daysNeeded}일 더 아끼면 구매 가능`}
+              label={alreadyAchievable ? "지금 바로 구울 수 있어요!" : `${daysNeeded}일 더 참으면 구울 수 있어요`}
               labelColor={alreadyAchievable ? "#059669" : "#6B6B6B"}
               highlight={alreadyAchievable}
               onRemove={() => setPendingDeleteId(item.id)}
@@ -153,16 +152,15 @@ export function WishlistCard() {
       {/* 삭제 확인 */}
       <ConfirmSheet
         open={!!pendingDeleteId}
-        message="위시리스트에서 삭제할까요?"
+        message="이 마쉬멜로를 목록에서 지울까요?"
         onConfirm={confirmDelete}
         onCancel={() => setPendingDeleteId(null)}
       />
 
-      {/* 구매 확인 시트 */}
-      <BottomSheet open={!!purchaseItem} onClose={() => setPurchaseItem(null)} title="구매 완료">
+      {/* 봉지 완성 확인 시트 */}
+      <BottomSheet open={!!purchaseItem} onClose={() => setPurchaseItem(null)} title="봉지 완성! 🎉">
         {purchaseItem && (
           <div className="px-4 pb-8">
-            {/* 아이템 정보 */}
             <div className="flex items-center gap-3 py-3 mb-4">
               {purchaseItem.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -173,8 +171,8 @@ export function WishlistCard() {
               )}
               <div>
                 <p className="text-base font-semibold" style={{ color: "#111111" }}>{purchaseItem.name}</p>
-                <p className="text-xl font-bold tabular-nums mt-0.5" style={{ color: "#111111" }}>
-                  ₩{formatKRW(purchaseItem.price)}
+                <p className="text-xl font-bold mt-0.5" style={{ color: "#111111" }}>
+                  {formatMarshmallow(purchaseItem.price)}
                 </p>
               </div>
             </div>
@@ -182,25 +180,25 @@ export function WishlistCard() {
             {/* 예산 영향 */}
             <div className="rounded-2xl p-4 mb-5" style={{ background: "#F8F7F4" }}>
               <p className="text-xs font-semibold mb-3" style={{ color: "#6B6B6B" }}>
-                구매하면 예산이 이렇게 바뀌어요
+                구우면 봉지가 이렇게 바뀌어요
               </p>
               <ImpactRow
                 label="오늘 일비"
-                before={`₩${formatKRW(currentDailyBudget)}`}
-                after={`₩${formatKRW(afterDailyBudget)}`}
+                before={formatMarshmallow(currentDailyBudget)}
+                after={formatMarshmallow(afterDailyBudget)}
                 afterColor={isAffordable ? "#111111" : "#DC2626"}
               />
               <ImpactRow
-                label="남은 총 예산"
-                before={`₩${formatKRW(remainingBalance)}`}
-                after={isAffordable ? `₩${formatKRW(afterBalance)}` : "예산 초과"}
+                label="남은 마쉬멜로"
+                before={formatMarshmallow(remainingBalance)}
+                after={isAffordable ? formatMarshmallow(afterBalance) : "봉지 부족"}
                 afterColor={isAffordable ? "#111111" : "#DC2626"}
               />
             </div>
 
             {!isAffordable && (
               <p className="text-xs text-center mb-4" style={{ color: "#DC2626" }}>
-                현재 예산보다 ₩{formatKRW(Math.abs(afterBalance))} 초과돼요
+                {formatMarshmallow(Math.abs(afterBalance))} 부족해요
               </p>
             )}
 
@@ -218,15 +216,15 @@ export function WishlistCard() {
                 className="flex-1 h-[54px] rounded-xl text-base font-bold text-white"
                 style={{ background: purchasing ? "#BBBBBB" : "#111111" }}
               >
-                {purchasing ? "처리 중..." : "구매 완료"}
+                {purchasing ? "처리 중..." : "봉지 완성!"}
               </button>
             </div>
           </div>
         )}
       </BottomSheet>
 
-      {/* 아이템 추가 시트 */}
-      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="위시리스트 추가">
+      {/* 마쉬멜로 추가 시트 */}
+      <BottomSheet open={showAdd} onClose={() => setShowAdd(false)} title="마쉬멜로 굽기">
         <div className="px-4 pt-4 pb-2">
           <p className="text-xs font-semibold mb-2" style={{ color: "#6B6B6B" }}>
             상품 링크로 자동 입력 (선택사항)
@@ -265,7 +263,7 @@ export function WishlistCard() {
         <div className="px-4 py-2">
           <input
             type="text"
-            placeholder="아이템 이름"
+            placeholder="뭘 굽고 싶어요?"
             value={itemName}
             onChange={(e) => setItemName(e.target.value)}
             maxLength={30}
@@ -274,9 +272,9 @@ export function WishlistCard() {
           />
         </div>
         <div className="px-4 pb-2">
-          <div className="text-[32px] font-extrabold tabular-nums text-right"
+          <div className="text-[32px] font-extrabold text-right"
             style={{ color: itemPrice ? "#111111" : "#BBBBBB" }}>
-            ₩ {itemPrice ? formatKRW(parseInt(itemPrice, 10)) : "0"}
+            {itemPrice ? formatMarshmallow(parseInt(itemPrice, 10)) : "0개"}
           </div>
         </div>
         <NumberPad value={itemPrice} onChange={setItemPrice} />
@@ -287,7 +285,7 @@ export function WishlistCard() {
             className="w-full h-[54px] rounded-xl text-base font-bold text-white"
             style={{ background: itemName && itemPrice ? "#111111" : "#BBBBBB" }}
           >
-            {saving ? "저장 중..." : "추가"}
+            {saving ? "저장 중..." : "굽기 시작"}
           </button>
         </div>
       </BottomSheet>
@@ -302,15 +300,15 @@ function ImpactRow({ label, before, after, afterColor }: {
     <div className="flex items-center justify-between py-2 border-t" style={{ borderColor: "#E8E6DF" }}>
       <span className="text-sm" style={{ color: "#6B6B6B" }}>{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm tabular-nums line-through" style={{ color: "#BBBBBB" }}>{before}</span>
+        <span className="text-sm line-through" style={{ color: "#BBBBBB" }}>{before}</span>
         <span className="text-xs" style={{ color: "#BBBBBB" }}>→</span>
-        <span className="text-sm font-bold tabular-nums" style={{ color: afterColor }}>{after}</span>
+        <span className="text-sm font-bold" style={{ color: afterColor }}>{after}</span>
       </div>
     </div>
   );
 }
 
-function WishlistRow({ item, label, labelColor, highlight, onRemove, onPurchase }: {
+function GoalRow({ item, label, labelColor, highlight, onRemove, onPurchase }: {
   item: WishlistItem; label: string; labelColor: string;
   highlight?: boolean; onRemove: () => void; onPurchase: () => void;
 }) {
@@ -338,8 +336,8 @@ function WishlistRow({ item, label, labelColor, highlight, onRemove, onPurchase 
           <p className="text-xs mt-0.5" style={{ color: labelColor }}>{label}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <p className="text-sm font-bold tabular-nums" style={{ color: "#111111" }}>
-            ₩{formatKRW(item.price)}
+          <p className="text-sm font-bold" style={{ color: "#111111" }}>
+            {formatMarshmallow(item.price)}
           </p>
           <button onClick={onRemove} className="text-lg" style={{ color: "#BBBBBB" }}>×</button>
         </div>
@@ -352,7 +350,7 @@ function WishlistRow({ item, label, labelColor, highlight, onRemove, onPurchase 
           color: "#FFFFFF",
         }}
       >
-        구매완료
+        봉지 완성!
       </button>
     </div>
   );

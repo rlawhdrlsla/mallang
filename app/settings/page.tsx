@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { NumberPad } from "@/components/ui/NumberPad";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { createClient } from "@/lib/supabase/client";
-import { formatKRW, today } from "@/lib/utils";
+import { formatMarshmallow, today } from "@/lib/utils";
 import { MissingDayPolicy } from "@/lib/types";
 import { getPreviousCycleSavings } from "@/lib/budget";
 
@@ -162,9 +162,9 @@ function SettingsContent() {
         <SectionTitle>기록 설정</SectionTitle>
         <Card>
           <p className="text-sm mb-1" style={{ color: "#111111" }}>며칠 만에 켰을 때 처리 방식</p>
-          <p className="text-xs mb-3" style={{ color: "#6B6B6B" }}>미입력 날짜를 어떻게 처리할지 정해요</p>
+          <p className="text-xs mb-3" style={{ color: "#6B6B6B" }}>안 켠 날의 마쉬멜로를 어떻게 처리할지 정해요</p>
           <div className="flex gap-2">
-            {([["full", "예산 소진"] , ["zero", "지출 없음"]] as [MissingDayPolicy, string][]).map(([v, label]) => (
+            {([["full", "다 먹은 걸로"] , ["zero", "참은 걸로"]] as [MissingDayPolicy, string][]).map(([v, label]) => (
               <button
                 key={v}
                 onClick={() => savePolicy(v)}
@@ -180,34 +180,34 @@ function SettingsContent() {
           </div>
         </Card>
 
-        {/* 예산 설정 */}
-        <SectionTitle>예산 설정</SectionTitle>
+        {/* 봉지 설정 */}
+        <SectionTitle>봉지 설정</SectionTitle>
         <Card>
           <SettingRow
-            label="현재 잔액"
-            value={cycle ? `₩${formatKRW(cycle.total_balance)}` : "-"}
+            label="봉지 속 마쉬멜로"
+            value={cycle ? formatMarshmallow(cycle.total_balance) : "-"}
             onEdit={() => setEditBalance(true)}
           />
           <Divider />
           <SettingRow
-            label="다음 월급일"
+            label="마쉬멜로 받는 날"
             value={cycle?.next_payday ?? "-"}
             onEdit={() => setEditPayday(true)}
           />
           <Divider />
           <SettingRow
             label="고정 지출"
-            value={cycle ? `₩${formatKRW(cycle.fixed_expenses)}` : "-"}
+            value={cycle ? formatMarshmallow(cycle.fixed_expenses) : "-"}
             onEdit={() => setEditFixed(true)}
           />
           {cycle && cycle.carried_over_amount > 0 && (
             <>
               <Divider />
               <div className="flex items-center justify-between">
-                <span className="text-sm" style={{ color: "#6B6B6B" }}>이전 사이클 이월액</span>
+                <span className="text-sm" style={{ color: "#6B6B6B" }}>지난 봉지 이월 마쉬멜로</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold tabular-nums" style={{ color: "#059669" }}>
-                    +₩{formatKRW(cycle.carried_over_amount)}
+                  <span className="text-sm font-semibold" style={{ color: "#059669" }}>
+                    +{formatMarshmallow(cycle.carried_over_amount)}
                   </span>
                   <button
                     onClick={async () => {
@@ -231,15 +231,15 @@ function SettingsContent() {
           )}
         </Card>
 
-        {/* 사이클 */}
-        <SectionTitle>사이클 관리</SectionTitle>
+        {/* 봉지 관리 */}
+        <SectionTitle>봉지 관리</SectionTitle>
         <Card>
           <button
             onClick={handleNewCycleClick}
             className="w-full text-left text-sm font-semibold py-1"
             style={{ color: "#111111" }}
           >
-            새 사이클 시작
+            새 봉지 시작
           </button>
         </Card>
 
@@ -297,10 +297,10 @@ function SettingsContent() {
       </BottomSheet>
 
       {/* 잔액 편집 */}
-      <BottomSheet open={editBalance} onClose={() => { setEditBalance(false); setBalance(""); }} title="잔액 수정">
+      <BottomSheet open={editBalance} onClose={() => { setEditBalance(false); setBalance(""); }} title="봉지 속 마쉬멜로 수정">
         <div className="px-4 pt-4">
-          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: balance ? "#111111" : "#BBBBBB" }}>
-            ₩ {balance ? formatKRW(parseInt(balance, 10)) : "0"}
+          <div className="text-[32px] font-extrabold text-right" style={{ color: balance ? "#111111" : "#BBBBBB" }}>
+            {balance ? formatMarshmallow(parseInt(balance, 10)) : "0개"}
           </div>
         </div>
         <NumberPad value={balance} onChange={setBalance} />
@@ -310,7 +310,7 @@ function SettingsContent() {
       </BottomSheet>
 
       {/* 월급일 편집 */}
-      <BottomSheet open={editPayday} onClose={() => setEditPayday(false)} title="월급일 변경">
+      <BottomSheet open={editPayday} onClose={() => setEditPayday(false)} title="마쉬멜로 받는 날 변경">
         <div className="px-4 py-4 space-y-4">
           <input type="date" value={payday} onChange={(e) => setPayday(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm outline-none" style={{ background: "#F0EEE8", color: "#111111" }} />
           <button onClick={savePayday} disabled={saving} className="w-full h-[54px] rounded-xl text-base font-bold text-white" style={{ background: "#111111" }}>저장</button>
@@ -320,8 +320,8 @@ function SettingsContent() {
       {/* 고정지출 편집 */}
       <BottomSheet open={editFixed} onClose={() => { setEditFixed(false); setFixedExp(""); }} title="고정 지출 변경">
         <div className="px-4 pt-4">
-          <div className="text-[32px] font-extrabold tabular-nums text-right" style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}>
-            ₩ {fixedExp ? formatKRW(parseInt(fixedExp, 10)) : "0"}
+          <div className="text-[32px] font-extrabold text-right" style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}>
+            {fixedExp ? formatMarshmallow(parseInt(fixedExp, 10)) : "0개"}
           </div>
         </div>
         <NumberPad value={fixedExp} onChange={setFixedExp} />
@@ -367,11 +367,11 @@ function SettingsContent() {
         </div>
       </BottomSheet>
 
-      {/* 새 사이클 이월 확인 */}
-      <BottomSheet open={showCarryoverConfirm} onClose={() => setShowCarryoverConfirm(false)} title="이전 사이클 절약액">
+      {/* 새 봉지 이월 확인 */}
+      <BottomSheet open={showCarryoverConfirm} onClose={() => setShowCarryoverConfirm(false)} title="지난 봉지 이월">
         <div className="px-4 py-6 space-y-4">
           <p className="text-base font-semibold text-center" style={{ color: "#111111" }}>
-            이전 사이클 절약액 ₩{formatKRW(carryoverSaved)}를 새 예산에 추가할까요?
+            지난 봉지에서 구운 {formatMarshmallow(carryoverSaved)}를 새 봉지에 추가할까요?
           </p>
           <button
             onClick={() => { setShowCarryoverConfirm(false); doNewCycle(true); }}

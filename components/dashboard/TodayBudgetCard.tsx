@@ -1,7 +1,7 @@
 "use client";
 
 import { useTodaySummary, useRemainingBudget } from "@/lib/hooks";
-import { formatKRW } from "@/lib/utils";
+import { formatMarshmallow } from "@/lib/utils";
 
 export function TodayBudgetCard() {
   const todaySummary = useTodaySummary();
@@ -18,21 +18,24 @@ export function TodayBudgetCard() {
     <div
       style={{
         background: "#111111",
-        borderRadius: 16,
-        padding: 20,
+        borderRadius: 20,
+        padding: 22,
       }}
     >
-      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-        오늘 쓸 수 있는 금액
+      <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+        오늘 먹을 수 있는 마쉬멜로
       </p>
-      <div
-        className="tabular-nums transition-all duration-200"
-        style={{ color: "#FFFFFF", fontSize: 40, fontWeight: 800, marginBottom: 16, lineHeight: 1.1 }}
-      >
-        ₩{formatKRW(budget)}
+
+      <div style={{ marginBottom: 18 }}>
+        <span
+          className="transition-all duration-200"
+          style={{ color: "#FFFFFF", fontSize: 42, fontWeight: 800, lineHeight: 1.1 }}
+        >
+          {formatMarshmallow(budget)}
+        </span>
       </div>
 
-      {/* Inline progress bar */}
+      {/* 진행 바 */}
       <div
         style={{
           height: 6,
@@ -46,53 +49,53 @@ export function TodayBudgetCard() {
             height: 6,
             borderRadius: 999,
             width: `${pct}%`,
-            background: isOver ? "#DC2626" : "#FFFFFF",
-            transition: "width 200ms",
+            background: isOver ? "#F87171" : "rgba(255,255,255,0.8)",
+            transition: "width 300ms ease",
           }}
         />
       </div>
 
-      {/* Stats row */}
+      {/* 먹음 / 남음 */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>지출</p>
-          <p className="tabular-nums" style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
-            ₩{formatKRW(spent)}
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 3 }}>먹음</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
+            {formatMarshmallow(spent)}
           </p>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 2 }}>
-            {isOver ? "초과" : "남은 금액"}
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 3 }}>
+            {isOver ? "초과" : "남음"}
           </p>
           <p
-            className="tabular-nums"
             style={{
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: 700,
-              color: isOver ? "#F87171" : "#34D399",
+              color: isOver ? "#F87171" : "#6EE7B7",
             }}
           >
-            {isOver ? `-₩${formatKRW(Math.abs(saved))}` : `₩${formatKRW(saved)}`}
+            {isOver ? `-${formatMarshmallow(Math.abs(saved))}` : formatMarshmallow(Math.max(saved, 0))}
           </p>
         </div>
       </div>
 
+      {/* 봉지 잔량 */}
       {remainingDays > 1 && (
         <div
           style={{
-            marginTop: 12,
-            paddingTop: 12,
-            borderTop: "1px solid rgba(255,255,255,0.12)",
+            marginTop: 14,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
-            월급날까지 {remainingDays}일간 총 사용 가능
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>
+            마쉬멜로 받는 날까지 {remainingDays}일
           </span>
-          <span className="tabular-nums" style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
-            ₩{formatKRW(remainingBalance)}
+          <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)" }}>
+            봉지에 {formatMarshmallow(remainingBalance)}
           </span>
         </div>
       )}

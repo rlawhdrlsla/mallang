@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
 import { Card } from "@/components/ui/Card";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
-import { formatKRW, today, CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/utils";
+import { formatMarshmallow, today } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 export function TodayExpenseList() {
@@ -29,7 +29,7 @@ export function TodayExpenseList() {
     <>
       <Card>
         <p className="text-sm font-semibold mb-3" style={{ color: "#191919" }}>
-          오늘 지출
+          오늘 먹은 마쉬멜로
         </p>
         <div className="space-y-1">
           {todayExpenses.map((e) => (
@@ -38,23 +38,12 @@ export function TodayExpenseList() {
               className="flex items-center justify-between py-2.5 border-t"
               style={{ borderColor: "#E8E6DF" }}
             >
+              <span className="text-sm" style={{ color: "#888888" }}>
+                {e.note || "마쉬멜로"}
+              </span>
               <div className="flex items-center gap-3">
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style={{
-                    background: CATEGORY_COLORS[e.category] + "22",
-                    color: CATEGORY_COLORS[e.category],
-                  }}
-                >
-                  {CATEGORY_LABELS[e.category]}
-                </span>
-                {e.note && (
-                  <span className="text-sm" style={{ color: "#888888" }}>{e.note}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-bold tabular-nums" style={{ color: "#191919" }}>
-                  ₩{formatKRW(e.amount)}
+                <span className="text-sm font-bold" style={{ color: "#191919" }}>
+                  {formatMarshmallow(e.amount)}
                 </span>
                 <button
                   onClick={() => setPendingId(e.id)}
@@ -71,7 +60,7 @@ export function TodayExpenseList() {
 
       <ConfirmSheet
         open={!!pendingId}
-        message="이 지출을 삭제할까요?"
+        message="이 기록을 지울까요?"
         onConfirm={confirmDelete}
         onCancel={() => setPendingId(null)}
       />

@@ -2,7 +2,7 @@
 
 import { useTodaySummary, useTomorrowBudget } from "@/lib/hooks";
 import { Card } from "@/components/ui/Card";
-import { formatKRW } from "@/lib/utils";
+import { formatMarshmallow } from "@/lib/utils";
 
 export function TomorrowBudgetCard() {
   const tomorrowBudget = useTomorrowBudget();
@@ -15,17 +15,17 @@ export function TomorrowBudgetCard() {
   return (
     <Card>
       <p className="text-xs font-semibold" style={{ color: "#888888" }}>
-        내일 쓸 수 있는 금액
+        내일 먹을 수 있는 마쉬멜로
       </p>
       <div
-        className="text-2xl font-bold tabular-nums mt-1 transition-all duration-200"
+        className="text-2xl font-bold mt-1 transition-all duration-200"
         style={{ color: "#191919" }}
       >
-        ₩{formatKRW(tomorrowBudget)}
+        {formatMarshmallow(tomorrowBudget)}
       </div>
       {todaySaved > 0 && (
         <p className="text-xs mt-1" style={{ color: "#059669" }}>
-          오늘 ₩{formatKRW(todaySaved)} 절약 반영
+          오늘 {formatMarshmallow(todaySaved)} 아낀 거 반영됐어요
         </p>
       )}
     </Card>

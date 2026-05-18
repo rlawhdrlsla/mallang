@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NumberPad } from "@/components/ui/NumberPad";
-import { formatKRW, today, diffDays } from "@/lib/utils";
+import { formatMarshmallow, today, diffDays } from "@/lib/utils";
 import { MissingDayPolicy } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 import { Suspense } from "react";
@@ -176,16 +176,16 @@ function Step2({ balance, setBalance }: { balance: string; setBalance: (v: strin
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>현재 잔액</h2>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>받은 마쉬멜로</h2>
         <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>
-          다음 월급까지 쓸 수 있는 돈을 입력하세요
+          마쉬멜로 받는 날까지 쓸 수 있는 금액이에요
         </p>
       </div>
       <div
-        className="text-[36px] font-extrabold tabular-nums text-right py-4"
+        className="text-[36px] font-extrabold text-right py-4"
         style={{ color: balance ? "#111111" : "#BBBBBB" }}
       >
-        ₩ {balance ? formatKRW(parseInt(balance, 10)) : "0"}
+        {balance ? formatMarshmallow(parseInt(balance, 10)) : "0개"}
       </div>
       <NumberPad value={balance} onChange={setBalance} />
     </div>
@@ -204,8 +204,8 @@ function Step3({ payday, setPayday, daysLeft }: {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>다음 월급일</h2>
-        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>언제 월급이 들어오나요?</p>
+        <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>마쉬멜로 받는 날</h2>
+        <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>언제 다음 마쉬멜로를 받아요?</p>
       </div>
       <input
         type="date"
@@ -236,7 +236,7 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
         <h2 className="text-2xl font-bold" style={{ color: "#111111" }}>고정 지출</h2>
         <p className="text-sm mt-1" style={{ color: "#6B6B6B" }}>매달 자동이체되는 금액이 있나요?</p>
       </div>
-      <p className="text-xs" style={{ color: "#6B6B6B" }}>해당 금액은 예산에서 먼저 제외됩니다</p>
+      <p className="text-xs" style={{ color: "#6B6B6B" }}>이 금액은 봉지에서 미리 빠져요</p>
       <div className="flex gap-3">
         {[false, true].map((v) => (
           <button
@@ -256,10 +256,10 @@ function Step4({ hasFixed, setHasFixed, fixedExp, setFixedExp }: {
       {hasFixed && (
         <>
           <div
-            className="text-[36px] font-extrabold tabular-nums text-right py-4"
+            className="text-[36px] font-extrabold text-right py-4"
             style={{ color: fixedExp ? "#111111" : "#BBBBBB" }}
           >
-            ₩ {fixedExp ? formatKRW(parseInt(fixedExp, 10)) : "0"}
+            {fixedExp ? formatMarshmallow(parseInt(fixedExp, 10)) : "0개"}
           </div>
           <NumberPad value={fixedExp} onChange={setFixedExp} />
         </>

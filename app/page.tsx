@@ -9,6 +9,7 @@ import { TomorrowBudgetCard } from "@/components/dashboard/TomorrowBudgetCard";
 import { WishlistCard } from "@/components/dashboard/WishlistCard";
 import { CycleSummaryCard } from "@/components/dashboard/CycleSummaryCard";
 import { TodayExpenseList } from "@/components/dashboard/TodayExpenseList";
+import { MotivationBanner } from "@/components/dashboard/MotivationBanner";
 import { ExpenseInputSheet } from "@/components/ExpenseInputSheet";
 import { formatDate, today } from "@/lib/utils";
 import { PaydayAlert } from "@/components/PaydayAlert";
@@ -29,16 +30,19 @@ function Dashboard() {
   return (
     <div className="page-fade pb-[160px]">
       {/* 헤더 */}
-      <div className="px-5 pt-12 pb-4 flex items-start justify-between">
+      <div className="px-5 pt-12 pb-2 flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#888888" }}>
-            안녕하세요, {profile?.nickname}님
+          <p className="text-base font-bold" style={{ color: "#111111" }}>
+            {profile?.nickname}의 말랑이 🍥
           </p>
           <p className="text-xs mt-0.5" style={{ color: "#BBBBBB" }}>
             {formatDate(today())}
           </p>
         </div>
       </div>
+
+      {/* 동기부여 멘트 */}
+      <MotivationBanner />
 
       {/* 월급일 경고 */}
       <PaydayAlert />
@@ -60,9 +64,9 @@ function Dashboard() {
         <button
           onClick={() => setSheetOpen(true)}
           className="w-full h-[54px] rounded-xl text-base font-bold text-white btn-press shadow-lg"
-          style={{ background: "#FF6B35" }}
+          style={{ background: "#111111" }}
         >
-          + 지출 추가
+          🍥 마쉬멜로 먹기
         </button>
       </div>
 

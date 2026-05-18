@@ -3,7 +3,7 @@
 import { useAppStore } from "@/store/app-store";
 import { useCycleSummary } from "@/lib/hooks";
 import { Card } from "@/components/ui/Card";
-import { formatKRW } from "@/lib/utils";
+import { formatMarshmallow } from "@/lib/utils";
 import { remainingDaysInCycle } from "@/lib/budget";
 
 export function CycleSummaryCard() {
@@ -18,17 +18,17 @@ export function CycleSummaryCard() {
   return (
     <Card>
       <p className="text-sm font-semibold mb-3" style={{ color: "#111111" }}>
-        이번 사이클 요약
+        이번 봉지 요약
       </p>
       <div className="space-y-2">
         <Row label="남은 기간" value={`${totalDays}일 중 ${remaining}일 남음`} />
         <Row
-          label="누적 절약"
-          value={`₩${formatKRW(totalSaved)}`}
+          label="구운 마쉬멜로"
+          value={formatMarshmallow(totalSaved)}
           valueColor={totalSaved > 0 ? "#059669" : "#6B6B6B"}
         />
         <Row
-          label="절약한 날"
+          label="참은 날"
           value={`${savedDays}일 / ${elapsedDays}일`}
           valueColor="#111111"
         />
@@ -41,7 +41,7 @@ function Row({ label, value, valueColor = "#111111" }: { label: string; value: s
   return (
     <div className="flex justify-between items-center">
       <span className="text-sm" style={{ color: "#6B6B6B" }}>{label}</span>
-      <span className="text-sm font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
+      <span className="text-sm font-bold" style={{ color: valueColor }}>{value}</span>
     </div>
   );
 }
