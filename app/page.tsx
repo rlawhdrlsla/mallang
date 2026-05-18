@@ -2,23 +2,22 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
+import { useCycleSummary } from "@/lib/hooks";
 import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { TodayBudgetCard } from "@/components/dashboard/TodayBudgetCard";
-import { TomorrowBudgetCard } from "@/components/dashboard/TomorrowBudgetCard";
 import { WishlistCard } from "@/components/dashboard/WishlistCard";
-import { CycleSummaryCard } from "@/components/dashboard/CycleSummaryCard";
 import { TodayExpenseList } from "@/components/dashboard/TodayExpenseList";
-import { MotivationBanner } from "@/components/dashboard/MotivationBanner";
 import { QuickResistBar } from "@/components/dashboard/QuickResistBar";
 import { ExpenseInputSheet } from "@/components/ExpenseInputSheet";
-import { formatDate, today } from "@/lib/utils";
+import { formatMarshmallow, formatDate, today } from "@/lib/utils";
 import { PaydayAlert } from "@/components/PaydayAlert";
 
 function Dashboard() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const profile = useAppStore((s) => s.profile);
   const isLoading = useAppStore((s) => s.isLoading);
+  const { totalSaved } = useCycleSummary();
 
   if (isLoading) {
     return (
@@ -31,30 +30,49 @@ function Dashboard() {
   return (
     <div className="page-fade pb-[160px]">
       {/* 헤더 */}
-      <div className="px-5 pt-12 pb-2 flex items-start justify-between">
-        <div>
-          <p className="text-base font-bold" style={{ color: "#111111" }}>
-            {profile?.nickname}의 말랑이 🍥
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "#BBBBBB" }}>
-            {formatDate(today())}
-          </p>
+      <div className="px-5 pt-12 pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-base font-bold" style={{ color: "#111111" }}>
+              {profile?.nickname}의 말랑이 🍥
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "#BBBBBB" }}>
+              {formatDate(today())}
+            </p>
+          </div>
+          {/* 누적 스코어 */}
+          {totalSaved > 0 && (
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+              style={{ background: "#ECFDF5" }}
+            >
+              <span className="text-base">🔥</span>
+              <div>
+                <p className="text-[10px] font-semibold" style={{ color: "#059669" }}>구운 마쉬멜로</p>
+                <p className="text-sm font-extrabold" style={{ color: "#059669" }}>
+                  {formatMarshmallow(totalSaved)}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* 동기부여 멘트 */}
-      <MotivationBanner />
 
       {/* 월급일 경고 */}
       <PaydayAlert />
 
       {/* 카드 목록 */}
       <div className="px-5 space-y-3">
+        {/* 오늘 마쉬멜로 (이모지 그리드 + 내일 미리보기) */}
         <TodayBudgetCard />
+
+        {/* 봉지 묶기 */}
         <QuickResistBar />
-        <TomorrowBudgetCard />
+
+        {/* 목표 봉지 */}
         <WishlistCard />
-        <CycleSummaryCard />
+
+        {/* 오늘 먹은 마쉬멜로 목록 */}
         <TodayExpenseList />
       </div>
 

@@ -13,6 +13,16 @@ interface ExpenseInputSheetProps {
   onClose: () => void;
 }
 
+function calcUnit(budget: number): number {
+  if (budget <= 0) return 1000;
+  const steps = [100, 200, 500, 1000, 2000, 3000, 5000, 10000, 20000, 30000, 50000, 100000];
+  for (const step of steps) {
+    const count = Math.floor(budget / step);
+    if (count >= 5 && count <= 10) return step;
+  }
+  return Math.max(1, Math.ceil(budget / 7));
+}
+
 export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
   const [step, setStep] = useState<"resist" | "input">("resist");
   const [amount, setAmount] = useState("");
@@ -25,7 +35,14 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
   const addExpense = useAppStore((s) => s.addExpense);
   const todaySummary = useTodaySummary();
 
-  const todayRemaining = todaySummary ? Math.max(0, todaySummary.budget - todaySummary.spent) : 0;
+  const todayBudget = todaySummary?.budget ?? 0;
+  const todaySpent = todaySummary?.spent ?? 0;
+  const todayRemaining = Math.max(0, todayBudget - todaySpent);
+
+  const unit = calcUnit(todayBudget);
+  const totalIcons = Math.max(1, Math.min(Math.floor(todayBudget / unit), 10));
+  const spentIcons = Math.min(Math.ceil(todaySpent / unit), totalIcons);
+  const remainingIcons = totalIcons - spentIcons;
 
   function handleClose() {
     setAmount("");
@@ -67,22 +84,52 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
     <BottomSheet
       open={open}
       onClose={handleClose}
-      title={step === "resist" ? "잠깐만요 🍥" : "마쉬멜로 먹기"}
+      title={step === "resist" ? "잠깐만요! 🍥" : "마쉬멜로 먹기"}
     >
       {step === "resist" ? (
-        <div className="px-4 pb-8 pt-2 space-y-5">
-          {/* 오늘 남은 예산 표시 */}
-          <div className="rounded-2xl p-5 text-center" style={{ background: "#F8F7F4" }}>
-            <p className="text-xs mb-2" style={{ color: "#6B6B6B" }}>오늘 남은 마쉬멜로</p>
-            <p className="text-4xl font-extrabold" style={{ color: todayRemaining > 0 ? "#111111" : "#DC2626" }}>
+        <div className="px-4 pb-8 pt-2">
+          {/* 남은 마시멜로 이모지 */}
+          <div
+            className="rounded-2xl p-5 text-center mb-5"
+            style={{ background: "#F8F7F4" }}
+          >
+            <p className="text-xs mb-4" style={{ color: "#6B6B6B" }}>
+              지금 남은 마쉬멜로
+            </p>
+            {/* 이모지 그리드 */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: 6,
+                marginBottom: 14,
+                minHeight: 40,
+              }}
+            >
+              {remainingIcons > 0 ? (
+                Array.from({ length: remainingIcons }).map((_, i) => (
+                  <span key={`r-${i}`} style={{ fontSize: 32, lineHeight: 1 }}>🍥</span>
+                ))
+              ) : (
+                <span style={{ fontSize: 32 }}>😮‍💨</span>
+              )}
+              {spentIcons > 0 &&
+                Array.from({ length: spentIcons }).map((_, i) => (
+                  <span key={`s-${i}`} style={{ fontSize: 32, lineHeight: 1, opacity: 0.15, filter: "grayscale(1)" }}>🍥</span>
+                ))
+              }
+            </div>
+
+            <p className="text-xl font-extrabold" style={{ color: todayRemaining > 0 ? "#111111" : "#DC2626" }}>
               {formatMarshmallow(todayRemaining)}
             </p>
             {todayRemaining > 0 ? (
-              <p className="text-xs mt-2" style={{ color: "#059669" }}>
-                참으면 오늘치 전부 구울 수 있어요 🔥
+              <p className="text-xs mt-1" style={{ color: "#059669" }}>
+                오늘 여기까지 남았어요 — 다 참으면 내일 더 많아져요 🔥
               </p>
             ) : (
-              <p className="text-xs mt-2" style={{ color: "#DC2626" }}>
+              <p className="text-xs mt-1" style={{ color: "#DC2626" }}>
                 오늘 예산을 다 썼어요
               </p>
             )}
@@ -90,7 +137,7 @@ export function ExpenseInputSheet({ open, onClose }: ExpenseInputSheetProps) {
 
           <button
             onClick={handleClose}
-            className="w-full h-[54px] rounded-xl text-base font-bold text-white"
+            className="w-full h-[54px] rounded-xl text-base font-bold text-white mb-3"
             style={{ background: "#111111" }}
           >
             🪢 지금 참을게요
