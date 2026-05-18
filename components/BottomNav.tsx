@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   {
     href: "/",
-    label: "Life Bag",
+    label: "생활비",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/history",
-    label: "Baking",
+    label: "목표봉지",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="4" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" fill={active ? "rgba(255,255,255,0.15)" : "none"} />
@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/settings",
-    label: "Settings",
+    label: "설정",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="3" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" />
