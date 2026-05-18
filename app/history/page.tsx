@@ -41,6 +41,7 @@ function BakingContent() {
   const [itemImageUrl, setItemImageUrl] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [dailyAutoSave, setDailyAutoSave] = useState(0);
+  const [initialCapital, setInitialCapital] = useState(0);
   const [fetching, setFetching] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -99,14 +100,31 @@ function BakingContent() {
         name: itemName,
         price: parseInt(itemPrice, 10),
         image_url: itemImageUrl || null,
-        current_amount: 0,
+        current_amount: initialCapital,
         daily_auto_save: dailyAutoSave,
       })
       .select().single();
 
-    if (!error && data) addWishlistItem(data);
+    if (!error && data) {
+      addWishlistItem(data);
+      // 초기 자본이 있으면 생활비 봉지에서 지출 기록
+      if (initialCapital > 0 && cycle) {
+        const { data: expense } = await supabase
+          .from("expenses")
+          .insert({
+            cycle_id: cycle.id,
+            user_id: user.id,
+            date: today(),
+            amount: initialCapital,
+            category: "etc",
+            note: `${itemName} 봉지 시작 자본`,
+          })
+          .select().single();
+        if (expense) addExpense(expense);
+      }
+    }
     setSaving(false);
-    setItemName(""); setItemPrice(""); setItemImageUrl(""); setUrlInput(""); setDailyAutoSave(0);
+    setItemName(""); setItemPrice(""); setItemImageUrl(""); setUrlInput(""); setDailyAutoSave(0); setInitialCapital(0);
     setShowAdd(false);
   }
 
@@ -628,9 +646,31 @@ function BakingContent() {
             onChange={(e) => setDailyAutoSave(parseInt(e.target.value, 10))}
             style={{ width: "100%", accentColor: PINK, marginBottom: 4 }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
             <span style={{ color: "#CCCCCC", fontSize: 11 }}>없음</span>
             <span style={{ color: "#CCCCCC", fontSize: 11 }}>{formatMarshmallow(Math.max(dailyBudget, 100000))}/일</span>
+          </div>
+
+          {/* 생활비 봉지에서 시작 자본 */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <p style={{ color: "#111111", fontWeight: 700, fontSize: 14 }}>시작 자본 (선택)</p>
+            <span style={{ color: initialCapital > 0 ? "#059669" : "#BBBBBB", fontWeight: 700, fontSize: 14 }}>
+              {initialCapital > 0 ? formatMarshmallow(initialCapital) : "없음"}
+            </span>
+          </div>
+          <p style={{ color: "#BBBBBB", fontSize: 12, marginBottom: 8 }}>생활비 봉지에서 즉시 가져올 금액</p>
+          <input
+            type="range"
+            min={0}
+            max={remainingBalance}
+            step={Math.max(1000, Math.floor(remainingBalance / 100))}
+            value={initialCapital}
+            onChange={(e) => setInitialCapital(parseInt(e.target.value, 10))}
+            style={{ width: "100%", accentColor: "#059669", marginBottom: 4 }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#CCCCCC", fontSize: 11 }}>없음</span>
+            <span style={{ color: "#CCCCCC", fontSize: 11 }}>잔액 {formatMarshmallow(remainingBalance)}</span>
           </div>
         </div>
         <div style={{ padding: "12px 20px 32px" }}>

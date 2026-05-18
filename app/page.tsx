@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/store/app-store";
-import { useTodaySummary, useRemainingBudget, useCycleSummary, useWishlistProgress } from "@/lib/hooks";
+import {
+  useTodaySummary,
+  useRemainingBudget,
+  useCycleSummary,
+  useWishlistProgress,
+  useActiveLockPeriod,
+} from "@/lib/hooks";
 import { DataLoader } from "@/components/DataLoader";
 import { BottomNav } from "@/components/BottomNav";
 import { ExpenseInputSheet } from "@/components/ExpenseInputSheet";
 import { ResistSheet } from "@/components/ResistSheet";
+import { LockSheet } from "@/components/LockSheet";
 import { QuickResistBar } from "@/components/dashboard/QuickResistBar";
 import { PaydayAlert } from "@/components/PaydayAlert";
 import { formatMarshmallow, today, diffDays } from "@/lib/utils";
@@ -18,15 +25,18 @@ const PINK_BTN = "#E06090";
 function Dashboard() {
   const [eatOpen, setEatOpen] = useState(false);
   const [resistOpen, setResistOpen] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
 
   const profile = useAppStore((s) => s.profile);
   const cycle = useAppStore((s) => s.cycle);
   const isLoading = useAppStore((s) => s.isLoading);
   const expenses = useAppStore((s) => s.expenses);
+
   const todaySummary = useTodaySummary();
-  const { remainingDays } = useRemainingBudget();
-  const { totalSaved } = useCycleSummary();
+  const { remainingDays, remainingBalance } = useRemainingBudget();
+  const { totalSaved, totalSpent, elapsedDays } = useCycleSummary();
   const progressList = useWishlistProgress();
+  const activeLock = useActiveLockPeriod();
 
   if (isLoading) {
     return (
@@ -42,14 +52,33 @@ function Dashboard() {
   const ratio = budget > 0 ? Math.min(spent / budget, 1) : 0;
   const daysLeft = cycle ? Math.max(0, diffDays(today(), cycle.next_payday)) : 0;
 
-  // 동기부여 메시지
+  // ─── 동기부여 메시지 엔진 (설계서 7가지 규칙) ───
   const hour = new Date().getHours();
-  let motivation = "오늘도 말랑이와 함께해요 🍥";
-  if (spent === 0 && hour >= 20) motivation = "오늘 하나도 안 먹었네요! 잘했어요 🌙";
-  else if (spent === 0) motivation = "아직 안 먹었어요. 오늘 참아볼까요? 💪";
-  else if (budget > 0 && spent >= budget) motivation = "오늘 예산을 다 썼어요. 내일 더 아껴봐요 🌱";
-  else if (budget > 0 && spent / budget < 0.4) motivation = "잘 아끼고 있어요! 이대로만 가요 🔥";
-  else motivation = "조금만 더 참으면 마쉬멜로가 쌓여요 ⭐";
+  const dayOfWeek = new Date().getDay(); // 0=일, 6=토
+  const daysToSaturday = dayOfWeek === 6 ? 7 : (6 - dayOfWeek);
+  const avgDailySpend = elapsedDays > 0 ? totalSpent / elapsedDays : 0;
+  const nearSoonGoal = progressList.find((p) => p.daysNeeded > 0 && p.daysNeeded <= 7);
+
+  let motivation: string;
+  if (spent === 0 && hour >= 22) {
+    motivation = "오늘 하나도 안 먹었네요! 잘했어요 🌙";
+  } else if (spent === 0) {
+    motivation = "아직 안 먹었어요. 오늘 참아볼까요? 💪";
+  } else if (daysLeft <= 3 && daysLeft > 0) {
+    motivation = `다음 마쉬멜로까지 ${daysLeft}일! 마지막 스퍼트 💪`;
+  } else if (nearSoonGoal) {
+    motivation = `${nearSoonGoal.daysNeeded}일 뒤 ${nearSoonGoal.item.name} 완성! 거의 다 왔어요 🎮`;
+  } else if (daysToSaturday === 2 && remainingBalance > 0) {
+    motivation = `토요일까지 참으면 ${formatMarshmallow(remainingBalance)}이 쌓여요! 🔥`;
+  } else if (budget > 0 && spent > budget) {
+    motivation = "오늘은 봉지 좀 헤펐네요. 내일은 같이 참아봐요 🌱";
+  } else if (elapsedDays > 2 && avgDailySpend > 0 && spent < avgDailySpend * 0.5) {
+    motivation = "오늘 마쉬멜로 많이 아꼈네요! 👏";
+  } else if (((hour >= 11 && hour <= 13) || (hour >= 17 && hour <= 20)) && budget > spent) {
+    motivation = `오늘 ${formatMarshmallow(budget - spent)} 더 먹을 수 있어요`;
+  } else {
+    motivation = "조금만 더 참으면 마쉬멜로가 쌓여요 ⭐";
+  }
 
   const todayExpenses = expenses.filter((e) => e.date === today());
 
@@ -79,16 +108,12 @@ function Dashboard() {
         <p style={{ color: "#333", fontSize: 14, fontWeight: 600 }}>{motivation}</p>
       </div>
 
-      {/* ── 마쉬멜로 캐릭터 + 숫자 ── */}
+      {/* ── 마쉬멜로 캐릭터 + 오늘 예산 ── */}
       <div style={{ margin: "0 20px" }}>
         <div style={{ background: "#242222", borderRadius: 24, padding: "24px 20px 22px", textAlign: "center" }}>
-          {/* 캐릭터 */}
           <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 16 }}>🍥</div>
 
-          {/* 라벨 */}
           <p style={{ color: "#555", fontSize: 12, marginBottom: 6 }}>오늘 먹을 수 있는 마쉬멜로</p>
-
-          {/* 메인 숫자 */}
           <p style={{
             fontSize: 54, fontWeight: 900, letterSpacing: "-1px", lineHeight: 1,
             color: isOver ? "#F87171" : PINK,
@@ -97,8 +122,8 @@ function Dashboard() {
           </p>
           <p style={{ color: "#555", fontSize: 13, marginBottom: 16 }}>개</p>
 
-          {/* 진행 바 (시각적으로만 — 숫자 없음) */}
-          <div style={{ height: 8, borderRadius: 99, background: "#333131", marginBottom: 10 }}>
+          {/* 진행 바 */}
+          <div style={{ height: 8, borderRadius: 99, background: "#333131", marginBottom: 6 }}>
             <div style={{
               height: 8, borderRadius: 99, transition: "width 400ms ease",
               width: `${ratio * 100}%`,
@@ -106,36 +131,50 @@ function Dashboard() {
             }} />
           </div>
 
-          {/* 하단 텍스트 */}
-          <p style={{ color: "#444", fontSize: 12 }}>
-            {daysLeft > 0 ? `${daysLeft}일 뒤 봉지가 리셋돼요` : "오늘 봉지가 리셋돼요"}
-          </p>
+          {/* 봉지 잔량 + 남은 날짜 */}
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 2px" }}>
+            <p style={{ color: "#444", fontSize: 12 }}>
+              잔량 {formatMarshmallow(remainingBalance)}
+            </p>
+            <p style={{ color: "#444", fontSize: 12 }}>
+              {daysLeft > 0 ? `${daysLeft}일 뒤 리셋` : "오늘 리셋"}
+            </p>
+          </div>
         </div>
 
-        {/* ── 먹기 / 참기 ── */}
-        <div style={{ display: "flex", gap: 12, marginTop: 16, marginBottom: 12 }}>
-          <button
-            onClick={() => setEatOpen(true)}
-            style={{
-              flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
-              background: "#FFFFFF", color: HOME_BG, border: "none",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-            }}
-          >
-            먹기
-          </button>
-          <button
-            onClick={() => setResistOpen(true)}
-            style={{
-              flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
-              background: "#2E2C2C", color: "#FFFFFF", border: "none",
-            }}
-          >
-            참기
-          </button>
-        </div>
+        {/* ── 먹기 / 참기 (봉지 묶기) ── */}
+        {!activeLock && (
+          <div style={{ display: "flex", gap: 12, marginTop: 16, marginBottom: 12 }}>
+            <button
+              onClick={() => setEatOpen(true)}
+              style={{
+                flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
+                background: "#FFFFFF", color: HOME_BG, border: "none",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+              }}
+            >
+              먹기
+            </button>
+            <button
+              onClick={() => setLockOpen(true)}
+              style={{
+                flex: 1, height: 60, borderRadius: 999, fontSize: 20, fontWeight: 800,
+                background: "#2E2C2C", color: "#FFFFFF", border: "none",
+              }}
+            >
+              참기
+            </button>
+          </div>
+        )}
 
-        {/* ── 핑크 CTA ── */}
+        {/* 봉지 묶기 활성 상태 */}
+        {activeLock && (
+          <div style={{ marginTop: 16, marginBottom: 12 }}>
+            <QuickResistBar />
+          </div>
+        )}
+
+        {/* ── 지금 참을게요 (충동 차단) ── */}
         <button
           onClick={() => setResistOpen(true)}
           style={{
@@ -143,20 +182,16 @@ function Dashboard() {
             background: `linear-gradient(135deg, ${PINK_BTN}, ${PINK})`,
             color: "#FFFFFF", border: "none",
             boxShadow: `0 6px 20px rgba(224,96,144,0.45)`,
+            marginBottom: 12,
           }}
         >
           지금 참을게요! 🔥
         </button>
       </div>
 
-      {/* ── 봉지 묶기 ── */}
-      <div style={{ margin: "20px 20px 0" }}>
-        <QuickResistBar />
-      </div>
-
       {/* ── 목표 봉지 미리보기 ── */}
       {progressList.length > 0 && (
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 20 }}>
           <div style={{ padding: "0 20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <span style={{ color: "#FFFFFF", fontWeight: 700, fontSize: 16 }}>목표 봉지</span>
             <a href="/history" style={{ color: "#666", fontSize: 13, textDecoration: "none" }}>전체보기 →</a>
@@ -211,6 +246,7 @@ function Dashboard() {
       <BottomNav />
       <ExpenseInputSheet open={eatOpen} onClose={() => setEatOpen(false)} />
       <ResistSheet open={resistOpen} onClose={() => setResistOpen(false)} />
+      <LockSheet open={lockOpen} onClose={() => setLockOpen(false)} />
     </div>
   );
 }
