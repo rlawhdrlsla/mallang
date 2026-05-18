@@ -8,18 +8,20 @@ import {
   getTomorrowBudget,
   getCycleSummary,
   computeWishlistProgress,
+  getActiveLockPeriod,
 } from "./budget";
 import { today } from "./utils";
-import type { DailySummary, WishlistProgress } from "./types";
+import type { DailySummary, LockPeriod, WishlistProgress } from "./types";
 
 export function useDailySummaries(): DailySummary[] {
   const cycle = useAppStore((s) => s.cycle);
   const expenses = useAppStore((s) => s.expenses);
   const profile = useAppStore((s) => s.profile);
+  const lockPeriods = useAppStore((s) => s.lockPeriods);
   return useMemo(() => {
     if (!cycle || !profile) return [];
-    return computeDailySummaries(cycle, expenses, profile.missing_day_policy);
-  }, [cycle, expenses, profile]);
+    return computeDailySummaries(cycle, expenses, profile.missing_day_policy, lockPeriods);
+  }, [cycle, expenses, profile, lockPeriods]);
 }
 
 export function useTodaySummary(): DailySummary | null {
@@ -57,4 +59,9 @@ export function useWishlistProgress(): WishlistProgress[] {
     const dailyAvg = elapsedDays > 0 ? totalSaved / elapsedDays : 0;
     return computeWishlistProgress(wishlistItems, totalSaved, dailyAvg);
   }, [wishlistItems, totalSaved, elapsedDays]);
+}
+
+export function useActiveLockPeriod(): LockPeriod | null {
+  const lockPeriods = useAppStore((s) => s.lockPeriods);
+  return useMemo(() => getActiveLockPeriod(lockPeriods), [lockPeriods]);
 }

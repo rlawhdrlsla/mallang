@@ -7,7 +7,7 @@ import { useAppStore } from "@/store/app-store";
 import { today } from "@/lib/utils";
 
 export function DataLoader({ children }: { children: React.ReactNode }) {
-  const { setProfile, setCycle, setExpenses, setWishlistItems, setLoading } = useAppStore();
+  const { setProfile, setCycle, setExpenses, setWishlistItems, setLockPeriods, setLoading } = useAppStore();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +69,15 @@ export function DataLoader({ children }: { children: React.ReactNode }) {
           .order("created_at", { ascending: false });
 
         setWishlistItems(wishlist ?? []);
+
+        // 참기 잠금 기간
+        const { data: lockPeriods } = await supabase
+          .from("lock_periods")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true);
+
+        setLockPeriods(lockPeriods ?? []);
         setLoading(false);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

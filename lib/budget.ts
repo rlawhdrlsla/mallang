@@ -1,19 +1,21 @@
-import { Cycle, DailySummary, Expense, MissingDayPolicy, WishlistItem, WishlistProgress } from "./types";
+import { Cycle, DailySummary, Expense, LockPeriod, MissingDayPolicy, WishlistItem, WishlistProgress } from "./types";
 import { dateRange, today, diffDays } from "./utils";
 
-/**
- * 날짜별 일비 계산 (전일 지출 합산 기반 재계산)
- * 각 날의 budget = (잔액 - 고정비 - 이전날까지 지출합) / 남은 일수
- */
+function isDateLocked(date: string, lockPeriods: LockPeriod[]): boolean {
+  return lockPeriods.some(
+    (lp) => lp.is_active && date >= lp.start_date && date <= lp.end_date
+  );
+}
+
 export function computeDailySummaries(
   cycle: Cycle,
   expenses: Expense[],
-  policy: MissingDayPolicy
+  policy: MissingDayPolicy,
+  lockPeriods: LockPeriod[] = []
 ): DailySummary[] {
   const allDates = dateRange(cycle.start_date, cycle.next_payday);
   const todayStr = today();
 
-  // 날짜별 실제 지출 map
   const spentByDate = new Map<string, number>();
   for (const e of expenses) {
     spentByDate.set(e.date, (spentByDate.get(e.date) ?? 0) + e.amount);
@@ -27,21 +29,34 @@ export function computeDailySummaries(
 
   for (let i = 0; i < allDates.length; i++) {
     const date = allDates[i];
-    const remainingDays = totalDays - i;
-    const budget = Math.floor(Math.max(effectiveBalance - cumulativeSpent, 0) / remainingDays);
+    const locked = isDateLocked(date, lockPeriods);
+
+    // 잠금 중인 날: budget=0, spent=0
+    if (locked) {
+      summaries.push({ date, budget: 0, spent: 0, saved: 0, locked: true });
+      continue;
+    }
+
+    const remainingDays = totalDays - i - lockPeriods.filter(
+      (lp) => lp.is_active && lp.start_date > date && lp.end_date <= allDates[allDates.length - 1]
+    ).reduce((acc, lp) => {
+      const start = new Date(lp.start_date + "T00:00:00");
+      const end = new Date(lp.end_date + "T00:00:00");
+      return acc + Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+    }, 0);
+
+    const budget = Math.floor(Math.max(effectiveBalance - cumulativeSpent, 0) / Math.max(remainingDays, 1));
 
     let spent = 0;
     if (date <= todayStr) {
       if (spentByDate.has(date)) {
         spent = spentByDate.get(date)!;
       } else if (date < todayStr && date < cycle.last_active_date) {
-        // 미입력 날: 정책 적용
         spent = policy === "full" ? budget : 0;
       }
-      // 오늘 날짜면 spent=0 (아직 하루 진행 중)
     }
 
-    summaries.push({ date, budget, spent, saved: budget - spent });
+    summaries.push({ date, budget, spent, saved: budget - spent, locked: false });
     cumulativeSpent += spent;
   }
 
@@ -58,8 +73,6 @@ export function getTomorrowBudget(summaries: DailySummary[]): number | null {
   const idx = summaries.findIndex((s) => s.date === todayStr);
   if (idx === -1 || idx + 1 >= summaries.length) return null;
   const todaySummary = summaries[idx];
-  // 내일 예산 = (남은 잔액) / (남은 일수 - 1)
-  // 남은 잔액 = budget * 남은일수 - 오늘지출
   const remainingDays = summaries.length - idx;
   const remainingBalance = todaySummary.budget * remainingDays - todaySummary.spent;
   if (remainingDays - 1 <= 0) return null;
@@ -71,8 +84,8 @@ export function getCycleSummary(summaries: DailySummary[]) {
   const pastDays = summaries.filter((s) => s.date <= todayStr);
   const totalSpent = pastDays.reduce((acc, s) => acc + s.spent, 0);
   const totalSaved = pastDays.reduce((acc, s) => acc + Math.max(s.saved, 0), 0);
-  const savedDays = pastDays.filter((s) => s.saved > 0).length;
-  const elapsedDays = pastDays.length;
+  const savedDays = pastDays.filter((s) => s.saved > 0 && !s.locked).length;
+  const elapsedDays = pastDays.filter((s) => !s.locked).length;
   return { totalSpent, totalSaved, savedDays, elapsedDays, totalDays: summaries.length };
 }
 
@@ -88,11 +101,12 @@ export function computeWishlistProgress(
 ): WishlistProgress[] {
   return items
     .map((item) => {
-      const remaining = Math.max(0, item.price - totalSaved);
-      const alreadyAchievable = remaining === 0;
-      const daysNeeded = alreadyAchievable || dailyAvgSaving <= 0
+      const remaining = Math.max(0, item.price - item.current_amount);
+      const alreadyAchievable = remaining === 0 || item.current_amount >= item.price;
+      const effectiveDailyRate = item.daily_auto_save > 0 ? item.daily_auto_save : dailyAvgSaving;
+      const daysNeeded = alreadyAchievable || effectiveDailyRate <= 0
         ? 0
-        : Math.ceil(remaining / dailyAvgSaving);
+        : Math.ceil(remaining / effectiveDailyRate);
       return { item, daysNeeded, alreadyAchievable };
     })
     .sort((a, b) => {
@@ -103,11 +117,9 @@ export function computeWishlistProgress(
 }
 
 export function getMissingDates(lastActiveDate: string): string[] {
-  const last = lastActiveDate;
   const todayStr = today();
-  if (last >= todayStr) return [];
-  const dates = dateRange(last, todayStr);
-  // last_active_date 당일과 오늘은 제외, 사이 날짜만
+  if (lastActiveDate >= todayStr) return [];
+  const dates = dateRange(lastActiveDate, todayStr);
   return dates.slice(1, -1);
 }
 
@@ -121,4 +133,11 @@ export function getPreviousCycleSavings(summaries: DailySummary[]): number {
 
 export function remainingDaysInCycle(nextPayday: string): number {
   return Math.max(0, diffDays(today(), nextPayday));
+}
+
+export function getActiveLockPeriod(lockPeriods: LockPeriod[]): LockPeriod | null {
+  const todayStr = today();
+  return lockPeriods.find(
+    (lp) => lp.is_active && todayStr >= lp.start_date && todayStr <= lp.end_date
+  ) ?? null;
 }

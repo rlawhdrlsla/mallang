@@ -1,6 +1,7 @@
 export type Gender = "male" | "female";
 export type Category = "food" | "transport" | "shopping" | "etc";
-export type MissingDayPolicy = "zero" | "full"; // zero=지출없음, full=예산소진
+export type MissingDayPolicy = "zero" | "full";
+export type LockReason = "WEEK1" | "WEEK2" | "MONTH1" | "CUSTOM";
 
 export interface Profile {
   id: string;
@@ -15,9 +16,9 @@ export interface Cycle {
   user_id: string;
   total_balance: number;
   fixed_expenses: number;
-  start_date: string;      // YYYY-MM-DD
-  next_payday: string;     // YYYY-MM-DD
-  carried_over_amount: number; // 이전 사이클 이월 절약액
+  start_date: string;
+  next_payday: string;
+  carried_over_amount: number;
   last_active_date: string;
   ended_at: string | null;
   created_at: string;
@@ -27,7 +28,7 @@ export interface Expense {
   id: string;
   cycle_id: string;
   user_id: string;
-  date: string;            // YYYY-MM-DD
+  date: string;
   amount: number;
   category: Category;
   note: string;
@@ -40,20 +41,32 @@ export interface WishlistItem {
   name: string;
   price: number;
   image_url?: string | null;
+  current_amount: number;
+  daily_auto_save: number;
   created_at: string;
 }
 
-// 계산된 일별 요약 (DB 저장 안 함, computed)
+export interface LockPeriod {
+  id: string;
+  cycle_id: string;
+  user_id: string;
+  start_date: string;
+  end_date: string;
+  reason: LockReason;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface DailySummary {
   date: string;
   budget: number;
   spent: number;
-  saved: number;   // 음수 = 초과
+  saved: number;
+  locked: boolean;
 }
 
-// 동기부여 카드용 계산 결과
 export interface WishlistProgress {
   item: WishlistItem;
-  daysNeeded: number;    // 0 이하 = 이미 달성 가능
+  daysNeeded: number;
   alreadyAchievable: boolean;
 }

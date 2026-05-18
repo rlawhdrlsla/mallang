@@ -10,6 +10,7 @@ import { WishlistCard } from "@/components/dashboard/WishlistCard";
 import { CycleSummaryCard } from "@/components/dashboard/CycleSummaryCard";
 import { TodayExpenseList } from "@/components/dashboard/TodayExpenseList";
 import { MotivationBanner } from "@/components/dashboard/MotivationBanner";
+import { QuickResistBar } from "@/components/dashboard/QuickResistBar";
 import { ExpenseInputSheet } from "@/components/ExpenseInputSheet";
 import { formatDate, today } from "@/lib/utils";
 import { PaydayAlert } from "@/components/PaydayAlert";
@@ -50,6 +51,7 @@ function Dashboard() {
       {/* 카드 목록 */}
       <div className="px-5 space-y-3">
         <TodayBudgetCard />
+        <QuickResistBar />
         <TomorrowBudgetCard />
         <WishlistCard />
         <CycleSummaryCard />
