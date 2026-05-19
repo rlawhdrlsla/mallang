@@ -1,43 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #F8F7F4;
-  --home-bg: #1C1A1A;
-  --pink: #F0A0BB;
-  --pink-btn: #E06090;
-  --pink-light: #FCE8F0;
+  --bg: #F5EDE8;
+  --bg2: #EDE4DE;
   --card: #FFFFFF;
-  --border: #E8E6DF;
-  --text-primary: #111111;
-  --text-secondary: #6B6B6B;
-  --text-disabled: #BBBBBB;
-  --point: #111111;
-  --point-light: #F0EEE8;
-  --success: #059669;
-  --success-light: #ECFDF5;
-  --danger: #DC2626;
-  --danger-light: #FEF2F2;
-  --warning: #D97706;
-  --warning-light: #FFFBEB;
-  --divider: #E8E6DF;
+  --burg: #5C3030;
+  --burg-light: #F5EDED;
+  --green: #4B7860;
+  --green-light: #E8F0EA;
+  --pink: #D4908A;
+  --pink-light: #FAEAEA;
+  --banner: #E8F0E6;
+  --banner-text: #3D5C3A;
+  --text: #1A0A0A;
+  --text2: #8B7070;
+  --text3: #C4A8A8;
+  --border: #EAE0DC;
+  --shadow: rgba(92,48,48,0.08);
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-card: var(--card);
+  --color-primary: var(--burg);
+  --color-secondary: var(--text2);
   --color-border: var(--border);
-  --color-primary: var(--text-primary);
-  --color-secondary: var(--text-secondary);
-  --color-disabled: var(--text-disabled);
-  --color-point: var(--point);
-  --color-point-light: var(--point-light);
-  --color-success: var(--success);
-  --color-success-light: var(--success-light);
-  --color-danger: var(--danger);
-  --color-danger-light: var(--danger-light);
-  --color-warning: var(--warning);
-  --color-warning-light: var(--warning-light);
-  --color-divider: var(--divider);
 }
 
 * {
@@ -47,7 +34,7 @@
 
 html, body {
   background: var(--bg);
-  color: var(--text-primary);
+  color: var(--text);
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   line-height: 1.5;
@@ -62,7 +49,6 @@ input, textarea, button {
   font-variant-numeric: tabular-nums;
 }
 
-/* 페이지 전환 */
 .page-fade {
   animation: fade-in 150ms ease-out;
 }
@@ -72,10 +58,35 @@ input, textarea, button {
   to   { opacity: 1; }
 }
 
-/* 버튼 클릭 */
 .btn-press {
   transition: transform 100ms;
 }
 .btn-press:active {
   transform: scale(0.97);
+}
+
+/* Range slider 스타일 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--burg-light);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--burg);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(92,48,48,0.3);
+}
+input[type="range"].green-slider {
+  background: var(--green-light);
+}
+input[type="range"].green-slider::-webkit-slider-thumb {
+  background: var(--green);
+  box-shadow: 0 2px 8px rgba(75,120,96,0.3);
 }

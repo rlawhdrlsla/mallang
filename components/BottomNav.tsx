@@ -3,36 +3,56 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const BURG = "#5C3030";
+const INACTIVE = "#C4A8A8";
+
 const NAV_ITEMS = [
   {
     href: "/",
-    label: "생활비",
+    label: "홈",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"
-          stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" fill={active ? "rgba(255,255,255,0.15)" : "none"} />
-        <path d="M9 21V12h6v9" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" strokeLinecap="round" />
+          stroke={active ? BURG : INACTIVE} strokeWidth="1.8"
+          fill={active ? "rgba(92,48,48,0.12)" : "none"} />
+        <path d="M9 21V12h6v9" stroke={active ? BURG : INACTIVE} strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: "/bags",
+    label: "봉지",
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M6 2l1.5 4H16.5L18 2" stroke={active ? BURG : INACTIVE} strokeWidth="1.8" strokeLinecap="round" />
+        <rect x="3" y="6" width="18" height="15" rx="2"
+          stroke={active ? BURG : INACTIVE} strokeWidth="1.8"
+          fill={active ? "rgba(92,48,48,0.12)" : "none"} />
+        <path d="M9 11c0 1.657 1.343 3 3 3s3-1.343 3-3"
+          stroke={active ? BURG : INACTIVE} strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     href: "/history",
-    label: "목표봉지",
+    label: "기록",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="4" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" fill={active ? "rgba(255,255,255,0.15)" : "none"} />
-        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-          stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="12" cy="12" r="9" stroke={active ? BURG : INACTIVE} strokeWidth="1.8"
+          fill={active ? "rgba(92,48,48,0.12)" : "none"} />
+        <path d="M12 7v5l3 3" stroke={active ? BURG : INACTIVE} strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     href: "/settings",
-    label: "설정",
+    label: "프로필",
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="3" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" />
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={active ? "#FFFFFF" : "#555555"} strokeWidth="1.8" fill="none" />
+        <circle cx="12" cy="8" r="4" stroke={active ? BURG : INACTIVE} strokeWidth="1.8"
+          fill={active ? "rgba(92,48,48,0.12)" : "none"} />
+        <path d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6"
+          stroke={active ? BURG : INACTIVE} strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -40,23 +60,19 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const isHome = pathname === "/";
 
   return (
     <nav
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full z-40 flex items-center"
       style={{
         maxWidth: 480,
-        height: 64,
-        background: isHome ? "#1C1A1A" : "#FFFFFF",
-        borderTop: isHome ? "1px solid #2E2C2C" : "1px solid #E8E6DF",
+        height: 68,
+        background: "#FFFFFF",
+        borderTop: "1px solid #EAE0DC",
       }}
     >
       {NAV_ITEMS.map(({ href, label, icon }) => {
         const active = pathname === href;
-        const textColor = isHome
-          ? (active ? "#FFFFFF" : "#555555")
-          : (active ? "#111111" : "#BBBBBB");
         return (
           <Link
             key={href}
@@ -64,7 +80,7 @@ export function BottomNav() {
             className="flex-1 flex flex-col items-center justify-center gap-1"
           >
             {icon(active)}
-            <span className="text-[11px] font-semibold" style={{ color: textColor }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: active ? BURG : INACTIVE }}>
               {label}
             </span>
           </Link>
